@@ -40,8 +40,8 @@ jobs:
           export CC=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang
           export CXX=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang++
           export AR=${HOMEBREW_PREFIX}/opt/llvm@19/bin/llvm-ar
-          export CFLAGS="-flto=thin -O3"
-          export CXXFLAGS="-flto=thin -O3"
+          export CFLAGS="-flto=thin -O3 --config-system-dir=${HOMEBREW_PREFIX}/etc/clang"
+          export CXXFLAGS="-flto=thin -O3 --config-system-dir=${HOMEBREW_PREFIX}/etc/clang"
           export LLD=${HOMEBREW_PREFIX}/opt/lld/bin/ld64.lld
           export RUSTFLAGS="-Clinker-plugin-lto -Clinker=$PWD/macos-linker.sh -Clink-arg=-fuse-ld=${LLD}"
           maturin build --release --target aarch64-apple-darwin --out dist -i ${{ matrix.py_version }}
