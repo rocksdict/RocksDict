@@ -2,7 +2,7 @@ name: PR check musl
 
 on:
   pull_request:
-    branches: [musl]
+    branches: [musl?]
 
 jobs:
   musllinux_1_2_x86_64:
