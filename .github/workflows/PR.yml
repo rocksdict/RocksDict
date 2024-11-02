@@ -28,6 +28,10 @@ jobs:
           manylinux: musllinux_1_2
           args: --release --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
           container: congyuwang/musllinux_1_2_x86_64:llvm-19.1.3
+          before-script-linux: |
+            apk update
+            apk add ncurses-static
+            apk add zlib-static
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
@@ -73,6 +77,10 @@ jobs:
           manylinux: musllinux_1_2
           args: --release --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
           container: congyuwang/musllinux_1_2_aarch64:llvm-19.1.3
+          before-script-linux: |
+            apk update
+            apk add ncurses-static
+            apk add zlib-static
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
