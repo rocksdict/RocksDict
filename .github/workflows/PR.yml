@@ -309,6 +309,8 @@ jobs:
           CFLAGS: "-flto=thin -O3"
           CXXFLAGS: "-flto=thin -O3"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
+          # https://github.com/rust-lang/rust-bindgen/issues/2360#issuecomment-2367084230
+          LLVM_CONFIG_PATH: /root/llvm_config.sh
       - name: Install built wheel and test
         run: |
           pip install rocksdict --no-index --find-links dist --force-reinstall || true
@@ -351,6 +353,7 @@ jobs:
           CFLAGS: "-flto=thin -O3"
           CXXFLAGS: "-flto=thin -O3"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
+          LLVM_CONFIG_PATH: /root/llvm_config.sh
       - name: Install built wheel and test
         run: |
           pip install rocksdict --no-index --find-links dist --force-reinstall || true
