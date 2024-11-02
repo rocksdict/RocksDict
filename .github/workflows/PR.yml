@@ -40,8 +40,8 @@ jobs:
           export CC=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang
           export CXX=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang++
           export AR=${HOMEBREW_PREFIX}/opt/llvm@19/bin/llvm-ar
-          export CFLAGS="-flto=thin -O3"
-          export CXXFLAGS="-flto=thin -O3"
+          export CFLAGS="-flto=thin -O3 --sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          export CXXFLAGS="-flto=thin -O3 --sysroot=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
           export LLD=${HOMEBREW_PREFIX}/opt/lld/bin/ld64.lld
           export RUSTFLAGS="-Clinker-plugin-lto -Clinker=$PWD/macos-linker.sh -Clink-arg=-fuse-ld=${LLD}"
           maturin build --release --target aarch64-apple-darwin --out dist -i ${{ matrix.py_version }}
@@ -109,7 +109,7 @@ jobs:
           name: wheels-win-${{ matrix.py_version }}
           path: dist
 
-  manylinux_2_28:
+  manylinux_2_28_x86_64:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -152,7 +152,7 @@ jobs:
           name: wheels-manylinux_2_28-${{ matrix.target }}
           path: dist
 
-  manylinux2014:
+  manylinux2014_x86_64:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -275,5 +275,5 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-manylinux_2014-${{ matrix.target }}
+          name: wheels-manylinux2014-${{ matrix.target }}
           path: dist
