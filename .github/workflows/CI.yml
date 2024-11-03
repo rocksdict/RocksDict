@@ -1,4 +1,4 @@
-name: CI musl
+name: CI
 
 on:
   release:
