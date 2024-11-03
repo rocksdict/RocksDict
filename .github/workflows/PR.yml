@@ -1,4 +1,4 @@
-name: PR check
+name: PR check musl
 
 on:
   pull_request:
@@ -276,4 +276,100 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: wheels-manylinux2014-${{ matrix.target }}
+          path: dist
+
+  musllinux_1_2_x86_64:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Build Wheels
+        uses: messense/maturin-action@v1
+        with:
+          rust-toolchain: 1.82.0
+          rustup-components: rustfmt
+          target: ${{ matrix.target }}
+          manylinux: musllinux_1_2
+          args: --release --no-default-features --features bindgen-static --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
+          container: congyuwang/musllinux_1_2_x86_64:llvm-19.1.3
+          before-script-linux: |
+            apk update
+            apk add ncurses-static
+            apk add zlib-static
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/crtbeginS.o /usr/lib/crtbeginS.o
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/crtendS.o /usr/lib/crtendS.o
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/libgcc.a /usr/lib/libgcc.a
+        env:
+          LIBCLANG_PATH: /usr/local/lib
+          CC: /usr/local/bin/clang
+          CXX: /usr/local/bin/clang++
+          AR: /usr/local/bin/llvm-ar
+          CFLAGS: "-flto=thin -O3 -isystem/usr/include"
+          CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/13.2.1/ -isystem/usr/include -isystem/usr/include/c++/13.2.1/x86_64-alpine-linux-musl"
+          RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
+          LLVM_CONFIG_PATH: /root/llvm_config.sh
+          LIBCLANG_STATIC_PATH: /usr/local/lib
+      - name: Run Tests
+        run: |
+          docker run --rm -v ${{ github.workspace }}/dist:/dist:ro -v ${{ github.workspace }}/test:/test:ro congyuwang/musllinux_1_2_x86_64:llvm-19.1.3 bash -c "
+            python3.12 -m pip install rocksdict --no-index --find-links /dist --force-reinstall || true
+            python3.12 -m pip install speedict --no-index --find-links /dist --force-reinstall || true
+            python3.12 -m unittest discover -v /test"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musllinux_1_2-x86_64
+          path: dist
+
+  musllinux_1_2_arm64:
+    runs-on: linux-arm64
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [aarch64]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Build Wheels
+        uses: messense/maturin-action@v1
+        with:
+          rust-toolchain: 1.82.0
+          rustup-components: rustfmt
+          target: ${{ matrix.target }}
+          manylinux: musllinux_1_2
+          args: --release --no-default-features --features bindgen-static --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
+          container: congyuwang/musllinux_1_2_aarch64:llvm-19.1.3
+          before-script-linux: |
+            apk update
+            apk add ncurses-static
+            apk add zlib-static
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/crtbeginS.o /usr/lib/crtbeginS.o
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/crtendS.o /usr/lib/crtendS.o
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/libgcc.a /usr/lib/libgcc.a
+        env:
+          LIBCLANG_PATH: /usr/local/lib
+          CC: /usr/local/bin/clang
+          CXX: /usr/local/bin/clang++
+          AR: /usr/local/bin/llvm-ar
+          CFLAGS: "-flto=thin -O3 -isystem/usr/include"
+          CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/13.2.1/ -isystem/usr/include -isystem/usr/include/c++/13.2.1/aarch64-alpine-linux-musl"
+          RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
+          LLVM_CONFIG_PATH: /root/llvm_config.sh
+          LIBCLANG_STATIC_PATH: /usr/local/lib
+      - name: Run Tests
+        run: |
+          docker run --rm -v ${{ github.workspace }}/dist:/dist:ro -v ${{ github.workspace }}/test:/test:ro congyuwang/musllinux_1_2_aarch64:llvm-19.1.3 bash -c "
+            python3.12 -m pip install rocksdict --no-index --find-links /dist --force-reinstall || true
+            python3.12 -m pip install speedict --no-index --find-links /dist --force-reinstall || true
+            python3.12 -m unittest discover -v /test"
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-musllinux_1_2-arm64
           path: dist
