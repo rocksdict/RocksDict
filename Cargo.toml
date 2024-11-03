@@ -38,14 +38,6 @@ bindgen-static = ["rocksdb/bindgen-static"]
 version = "0.22"
 features = ["py-clone", "extension-module", "num-bigint"]
 
-# https://github.com/rust-lang/rust-bindgen/issues/2360#issuecomment-2367084230
-[build-dependencies]
-bindgen = { version = "0.70", default-features = false, features = [
-    "logging",
-    "prettyplease",
-    "static",
-] }
-
 [profile.release]
 codegen-units = 1
 debug = false
