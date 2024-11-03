@@ -23,7 +23,7 @@ rocksdb = { path = "rust-rocksdb", default-features = false, features = [
     "zlib",
     "bzip2",
 ] }
-librocksdb-sys = { path = "rust-rocksdb/librocksdb-sys" }
+librocksdb-sys = { path = "rust-rocksdb/librocksdb-sys", default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 num-bigint = "0.4"
