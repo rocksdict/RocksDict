@@ -38,7 +38,7 @@ jobs:
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3"
-          CXXFLAGS: "-flto=thin -O3"
+          CXXFLAGS: "-flto=thin -O3 -I /usr/include -I /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/include"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
           # https://github.com/rust-lang/rust-bindgen/issues/2360#issuecomment-2367084230
           LLVM_CONFIG_PATH: /root/llvm_config.sh
@@ -87,7 +87,7 @@ jobs:
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3"
-          CXXFLAGS: "-flto=thin -O3"
+          CXXFLAGS: "-flto=thin -O3 -I /usr/include -I /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/include"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
           # https://github.com/rust-lang/rust-bindgen/issues/2360#issuecomment-2367084230
           LLVM_CONFIG_PATH: /root/llvm_config.sh
