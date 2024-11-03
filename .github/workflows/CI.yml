@@ -32,6 +32,8 @@ jobs:
             apk update
             apk add ncurses-static
             apk add zlib-static
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/crtbeginS.o /usr/lib/crtbeginS.o
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/crtendS.o /usr/lib/crtendS.o
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
@@ -39,7 +41,7 @@ jobs:
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3 -isystem/usr/include"
           CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/13.2.1/ -isystem/usr/include -isystem/usr/include/c++/13.2.1/x86_64-alpine-linux-musl"
-          RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld -Clink-arg=-L/usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1"
+          RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
           # https://github.com/rust-lang/rust-bindgen/issues/2360#issuecomment-2367084230
           LLVM_CONFIG_PATH: /root/llvm_config.sh
           LIBCLANG_STATIC_PATH: /usr/local/lib
@@ -81,6 +83,8 @@ jobs:
             apk update
             apk add ncurses-static
             apk add zlib-static
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/crtbeginS.o /usr/lib/crtbeginS.o
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/crtendS.o /usr/lib/crtendS.o
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
@@ -88,7 +92,7 @@ jobs:
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3 -isystem/usr/include"
           CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/13.2.1/ -isystem/usr/include -isystem/usr/include/c++/13.2.1/aarch64-alpine-linux-musl"
-          RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld -Clink-arg=-L/usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1"
+          RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
           # https://github.com/rust-lang/rust-bindgen/issues/2360#issuecomment-2367084230
           LLVM_CONFIG_PATH: /root/llvm_config.sh
           LIBCLANG_STATIC_PATH: /usr/local/lib
