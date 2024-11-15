@@ -19,7 +19,6 @@ jobs:
       - name: Install llvm-19
         run: |
           brew update
-          brew install cmake
           brew install llvm@19
           brew install lld
       - uses: actions/setup-python@v5
@@ -36,13 +35,12 @@ jobs:
           rustup target add aarch64-apple-darwin
           pip install maturin
           eval "$(brew shellenv)"
-          export MACOSX_DEPLOYMENT_TARGET=10.14
           export LIBCLANG_PATH=${HOMEBREW_PREFIX}/opt/llvm@19/lib
           export CC=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang
           export CXX=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang++
           export AR=${HOMEBREW_PREFIX}/opt/llvm@19/bin/llvm-ar
-          export CFLAGS="-flto=thin -O3"
-          export CXXFLAGS="-flto=thin -O3"
+          export CFLAGS="-flto=thin -O3 -mmacosx-version-min=10.14"
+          export CXXFLAGS="-flto=thin -O3 -mmacosx-version-min=10.14"
           export LLD=${HOMEBREW_PREFIX}/opt/lld/bin/ld64.lld
           export RUSTFLAGS="-Clinker-plugin-lto -Clinker=$PWD/macos-linker.sh -Clink-arg=-fuse-ld=${LLD}"
           maturin build --release --target aarch64-apple-darwin --out dist -i ${{ matrix.py_version }}
