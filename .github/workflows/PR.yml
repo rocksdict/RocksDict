@@ -6,7 +6,7 @@ on:
 
 jobs:
   macos:
-    runs-on: macos-13
+    runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py_version }}
-          architecture: x64
+          architecture: arm64
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
