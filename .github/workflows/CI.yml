@@ -5,13 +5,66 @@ on:
     types: [published]
 
 jobs:
+  macos-py37:
+    runs-on: macos-13
+    strategy:
+      fail-fast: false
+      matrix:
+        py_version: [3.7]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Install llvm-19
+        run: |
+          brew update
+          brew install llvm@19
+          brew install lld
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.py_version }}
+          architecture: x64
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.82.0
+          default: true
+      - name: Build wheels
+        run: |
+          rustup target add aarch64-apple-darwin
+          pip install maturin
+          eval "$(brew shellenv)"
+          export MACOSX_DEPLOYMENT_TARGET=10.14
+          export LIBCLANG_PATH=${HOMEBREW_PREFIX}/opt/llvm@19/lib
+          export CC=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang
+          export CXX=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang++
+          export AR=${HOMEBREW_PREFIX}/opt/llvm@19/bin/llvm-ar
+          export CFLAGS="-flto=thin -O3 -isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          export CXXFLAGS="-flto=thin -O3 -isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
+          export LLD=${HOMEBREW_PREFIX}/opt/lld/bin/ld64.lld
+          export RUSTFLAGS="-Clinker-plugin-lto -Clinker=$PWD/macos-linker.sh -Clink-arg=-fuse-ld=${LLD}"
+          maturin build --release --target aarch64-apple-darwin --out dist -i ${{ matrix.py_version }}
+          maturin build --release --target x86_64-apple-darwin --out dist -i ${{ matrix.py_version }}
+      - name: Install built wheel
+        run: |
+          pip install rocksdict --no-index --find-links dist --force-reinstall || true
+          pip install speedict --no-index --find-links dist --force-reinstall || true
+      - name: Python UnitTest
+        run: |
+          python -m unittest discover -v test
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.py_version }}
+          path: dist
+
   macos:
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
         py_version:
-          [3.7, 3.8, 3.9, "3.10", "3.11", "3.12", "3.13", "pypy3.9", "pypy3.10"]
+          [3.8, 3.9, "3.10", "3.11", "3.12", "3.13", "pypy3.9", "pypy3.10"]
     steps:
       - uses: actions/checkout@v2
         with:
