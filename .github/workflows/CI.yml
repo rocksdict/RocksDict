@@ -89,7 +89,7 @@ jobs:
         uses: messense/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --no-default-features --features bindgen-static
+          args: --release --out dist --no-default-features --features bindgen-runtime
         env:
           LIBCLANG_PATH: ${{ runner.temp }}/llvm-18.1/lib
           CC: ${{ runner.temp }}/llvm-18.1/bin/clang-cl

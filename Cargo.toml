@@ -22,7 +22,6 @@ rocksdb = { path = "rust-rocksdb", default-features = false, features = [
     "zstd",
     "zlib",
     "bzip2",
-    "lto",
 ] }
 librocksdb-sys = { path = "rust-rocksdb/librocksdb-sys", default-features = false }
 serde = { version = "1", features = ["derive"] }
@@ -31,9 +30,10 @@ num-bigint = "0.4"
 libc = "0.2"
 
 [features]
-default = ["bindgen-runtime"]
+default = ["bindgen-runtime", "lto"]
 bindgen-runtime = ["rocksdb/bindgen-runtime"]
 bindgen-static = ["rocksdb/bindgen-static"]
+lto = ["rocksdb/lto"]
 
 [dependencies.pyo3]
 version = "0.22"
