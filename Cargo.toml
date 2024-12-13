@@ -22,6 +22,7 @@ rocksdb = { path = "rust-rocksdb", default-features = false, features = [
     "zstd",
     "zlib",
     "bzip2",
+    "lto",
 ] }
 librocksdb-sys = { path = "rust-rocksdb/librocksdb-sys", default-features = false }
 serde = { version = "1", features = ["derive"] }
