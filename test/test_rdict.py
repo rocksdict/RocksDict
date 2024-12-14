@@ -16,7 +16,6 @@ import gc
 import sys
 import platform
 from json import loads, dumps
-from subprocess import Popen
 
 
 TEST_INT_RANGE_UPPER = 999999
