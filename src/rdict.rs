@@ -193,7 +193,7 @@ impl Rdict {
         access_type: AccessType,
         py: Python,
     ) -> PyResult<Self> {
-        let pickle = PyModule::import(py, "pickle")?.to_object(py);
+        let pickle = PyModule::import(py, "pickle")?;
         // create db path if missing
         fs::create_dir_all(path).map_err(|e| PyException::new_err(e.to_string()))?;
         // load options
@@ -288,8 +288,8 @@ impl Rdict {
             write_opt: (&w_opt).into(),
             flush_opt: FlushOptionsPy::new(),
             read_opt: r_opt.to_read_options(options.raw_mode, py)?,
-            loads: pickle.getattr(py, "loads")?,
-            dumps: pickle.getattr(py, "dumps")?,
+            loads: pickle.getattr("loads")?.unbind(),
+            dumps: pickle.getattr("dumps")?.unbind(),
             write_opt_py: w_opt,
             read_opt_py: r_opt,
             column_family: None,
@@ -346,10 +346,15 @@ impl Rdict {
     }
 
     /// Use list of keys for batch get.
-    fn __getitem__(&self, key: &Bound<PyAny>, py: Python) -> PyResult<PyObject> {
+    fn __getitem__<'py>(&self, key: &Bound<PyAny>, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         match self.get(key, None, None, py) {
-            Ok(Some(v)) => Ok(v),
-            Ok(None) => Err(PyKeyError::new_err(format!("key {key} not found"))),
+            Ok(v) => {
+                if v.is_none() {
+                    Err(PyKeyError::new_err(format!("key {key} not found")))
+                } else {
+                    Ok(v)
+                }
+            }
             Err(e) => Err(e),
         }
     }
@@ -366,13 +371,13 @@ impl Rdict {
     ///    None or default value if the key does not exist.
     #[inline]
     #[pyo3(signature = (key, default = None, read_opt = None))]
-    fn get(
+    fn get<'py>(
         &self,
         key: &Bound<PyAny>,
-        default: Option<&Bound<PyAny>>,
+        default: Option<Bound<'py, PyAny>>,
         read_opt: Option<&ReadOptionsPy>,
-        py: Python,
-    ) -> PyResult<Option<PyObject>> {
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
         let db = self.get_db()?;
         let read_opt_option = match read_opt {
             None => None,
@@ -390,18 +395,16 @@ impl Rdict {
             Some(cf) => cf.clone(),
         };
         if let Ok(keys) = key.downcast() {
-            return Ok(Some(
-                get_batch_inner(
-                    db,
-                    keys,
-                    py,
-                    read_opt,
-                    &self.loads,
-                    &cf,
-                    self.opt_py.raw_mode,
-                )?
-                .to_object(py),
-            ));
+            return Ok(get_batch_inner(
+                db,
+                keys,
+                py,
+                read_opt,
+                &self.loads,
+                &cf,
+                self.opt_py.raw_mode,
+            )?
+            .into_any());
         }
         let key_bytes = encode_key(key, self.opt_py.raw_mode)?;
         let value_result = db
@@ -411,17 +414,17 @@ impl Rdict {
             None => {
                 // try to return default value
                 if let Some(default) = default {
-                    Ok(Some(default.to_object(py)))
+                    Ok(default)
                 } else {
-                    Ok(None)
+                    Ok(py.None().bind(py).to_owned())
                 }
             }
-            Some(slice) => Ok(Some(decode_value(
+            Some(slice) => Ok(decode_value(
                 py,
                 slice.as_ref(),
                 &self.loads,
                 self.opt_py.raw_mode,
-            )?)),
+            )?),
         }
     }
 
@@ -440,13 +443,13 @@ impl Rdict {
     ///    None or default value if the key does not exist.
     #[inline]
     #[pyo3(signature = (key, default = None, read_opt = None))]
-    fn get_entity(
+    fn get_entity<'py>(
         &self,
         key: &Bound<PyAny>,
-        default: Option<&Bound<PyAny>>,
+        default: Option<Bound<'py, PyAny>>,
         read_opt: Option<&ReadOptionsPy>,
-        py: Python,
-    ) -> PyResult<Option<PyObject>> {
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
         let db = self.get_db()?;
         let read_opt_option = match read_opt {
             None => None,
@@ -471,9 +474,9 @@ impl Rdict {
             None => {
                 // try to return default value
                 if let Some(default) = default {
-                    Ok(Some(default.to_object(py)))
+                    Ok(default)
                 } else {
-                    Ok(None)
+                    Ok(py.None().bind(py).to_owned())
                 }
             }
             Some(columns) => {
@@ -483,7 +486,7 @@ impl Rdict {
                     let value = decode_value(py, column.value, &self.loads, self.opt_py.raw_mode)?;
                     result.append(PyTuple::new(py, [name, value])?)?;
                 }
-                Ok(Some(result.to_object(py)))
+                Ok(result.into_any())
             }
         }
     }
@@ -631,13 +634,13 @@ impl Rdict {
     ///         returning (False, None) implies that the key definitely does not exist.
     ///         returning (True,  None) implies that the key may exist.
     #[pyo3(signature = (key, fetch = false, read_opt = None))]
-    fn key_may_exist(
+    fn key_may_exist<'py>(
         &self,
         key: &Bound<PyAny>,
         fetch: bool,
         read_opt: Option<&ReadOptionsPy>,
-        py: Python,
-    ) -> PyResult<PyObject> {
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
         let db = self.get_db()?;
         let key = encode_key(key, self.opt_py.raw_mode)?;
         let read_opt_option = match read_opt {
@@ -658,16 +661,19 @@ impl Rdict {
         if !fetch {
             Ok(db
                 .key_may_exist_cf_opt(&cf, &key[..], read_opt)
-                .to_object(py))
+                .into_pyobject(py)?
+                .to_owned()
+                .into_any())
         } else {
             let (may, value) = db.key_may_exist_cf_opt_value(&cf, &key[..], read_opt);
             match value {
-                None => Ok((may, py.None()).to_object(py)),
+                None => Ok((may, py.None()).into_pyobject(py)?.into_any()),
                 Some(dat) => Ok((
                     may,
                     decode_value(py, dat.as_ref(), &self.loads, self.opt_py.raw_mode)?,
                 )
-                    .to_object(py)),
+                    .into_pyobject(py)?
+                    .into_any()),
             }
         }
     }
@@ -1289,7 +1295,7 @@ impl Rdict {
     }
 
     /// Returns a list of all table files with their level, start key and end key
-    fn live_files(&self, py: Python) -> PyResult<PyObject> {
+    fn live_files<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyList>> {
         let db = self.get_db()?;
         match db.live_files() {
             Ok(lfs) => {
@@ -1302,7 +1308,7 @@ impl Rdict {
                         self.opt_py.raw_mode,
                     )?)?
                 }
-                Ok(result.to_object(py))
+                Ok(result)
             }
             Err(e) => Err(PyException::new_err(e.to_string())),
         }
@@ -1346,19 +1352,19 @@ impl Rdict {
     }
 }
 
-fn display_live_file_dict(
+fn display_live_file_dict<'py>(
     lf: LiveFile,
-    py: Python,
+    py: Python<'py>,
     pickle_loads: &PyObject,
     raw_mode: bool,
-) -> PyResult<PyObject> {
+) -> PyResult<Bound<'py, PyAny>> {
     let result = PyDict::new(py);
     let start_key = match lf.start_key {
-        None => py.None(),
+        None => py.None().bind(py).to_owned(),
         Some(k) => decode_value(py, &k, pickle_loads, raw_mode)?,
     };
     let end_key = match lf.end_key {
-        None => py.None(),
+        None => py.None().bind(py).to_owned(),
         Some(k) => decode_value(py, &k, pickle_loads, raw_mode)?,
     };
     result.set_item("name", lf.name)?;
@@ -1368,7 +1374,7 @@ fn display_live_file_dict(
     result.set_item("end_key", end_key)?;
     result.set_item("num_entries", lf.num_entries)?;
     result.set_item("num_deletions", lf.num_deletions)?;
-    Ok(result.to_object(py))
+    Ok(result.into_any())
 }
 
 fn get_batch_inner<'a>(

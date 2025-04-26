@@ -266,7 +266,7 @@ impl RdictIter {
     }
 
     /// Returns the current key.
-    pub fn key(&self, py: Python) -> PyResult<PyObject> {
+    pub fn key<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         if self.valid() {
             // Safety Note: This is safe as all methods that may invalidate the buffer returned
             // take `&mut self`, so borrow checker will prevent use of buffer after seek.
@@ -280,12 +280,12 @@ impl RdictIter {
                 Ok(decode_value(py, key, &self.loads, self.raw_mode)?)
             }
         } else {
-            Ok(py.None())
+            Ok(py.None().bind(py).to_owned())
         }
     }
 
     /// Returns the current value.
-    pub fn value(&self, py: Python) -> PyResult<PyObject> {
+    pub fn value<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         if self.valid() {
             // Safety Note: This is safe as all methods that may invalidate the buffer returned
             // take `&mut self`, so borrow checker will prevent use of buffer after seek.
@@ -299,7 +299,7 @@ impl RdictIter {
                 Ok(decode_value(py, value, &self.loads, self.raw_mode)?)
             }
         } else {
-            Ok(py.None())
+            Ok(py.None().bind(py).to_owned())
         }
     }
 
@@ -310,7 +310,7 @@ impl RdictIter {
     ///    If the value is not an entity, returns a single-column
     ///    with default column name (empty bytes/string).
     ///    None or default value if the key does not exist.
-    pub fn columns(&self, py: Python) -> PyResult<PyObject> {
+    pub fn columns<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         if self.valid() {
             let columns = unsafe {
                 rocksdb::WideColumns::from_c(librocksdb_sys::rocksdb_iter_columns(
@@ -323,9 +323,9 @@ impl RdictIter {
                 let value = decode_value(py, column.value, &self.loads, self.raw_mode)?;
                 result.append(PyTuple::new(py, [name, value])?)?;
             }
-            Ok(result.to_object(py))
+            Ok(result.into_any())
         } else {
-            Ok(py.None())
+            Ok(py.None().bind(py).to_owned())
         }
     }
 }
@@ -340,6 +340,58 @@ impl Drop for RdictIter {
 
 unsafe impl Send for RdictIter {}
 
+macro_rules! impl_iter_single {
+    ($iter_name: ident, $field: ident) => {
+        #[pymethods]
+        impl $iter_name {
+            fn __iter__(slf: PyRef<Self>) -> PyRef<Self> {
+                slf
+            }
+
+            fn __next__<'py>(
+                mut slf: PyRefMut<Self>,
+                py: Python<'py>,
+            ) -> PyResult<Option<Bound<'py, PyAny>>> {
+                if slf.inner.valid() {
+                    let $field = slf.inner.$field(py)?;
+                    if slf.backwards {
+                        slf.inner.prev();
+                    } else {
+                        slf.inner.next();
+                    }
+                    Ok(Some($field))
+                } else {
+                    Ok(None)
+                }
+            }
+        }
+
+        impl $iter_name {
+            pub(crate) fn new(
+                inner: RdictIter,
+                backwards: bool,
+                from_key: Option<&Bound<PyAny>>,
+            ) -> PyResult<Self> {
+                let mut inner = inner;
+                if let Some(from_key) = from_key {
+                    if backwards {
+                        inner.seek_for_prev(from_key)?;
+                    } else {
+                        inner.seek(from_key)?;
+                    }
+                } else {
+                    if backwards {
+                        inner.seek_to_last();
+                    } else {
+                        inner.seek_to_first();
+                    }
+                }
+                Ok(Self { inner, backwards })
+            }
+        }
+    };
+}
+
 macro_rules! impl_iter {
     ($iter_name: ident, $($field: ident),*) => {
         #[pymethods]
@@ -348,7 +400,7 @@ macro_rules! impl_iter {
                 slf
             }
 
-            fn __next__(mut slf: PyRefMut<Self>, py: Python) -> PyResult<Option<PyObject>> {
+            fn __next__<'py>(mut slf: PyRefMut<Self>, py: Python<'py>) -> PyResult<Option<Bound<'py, PyAny>>> {
                 if slf.inner.valid() {
                     $(let $field = slf.inner.$field(py)?;)*
                     if slf.backwards {
@@ -356,7 +408,7 @@ macro_rules! impl_iter {
                     } else {
                         slf.inner.next();
                     }
-                    Ok(Some(($($field),*).to_object(py)))
+                    Ok(Some(($($field),*).into_pyobject(py)?.into_any()))
                 } else {
                     Ok(None)
                 }
@@ -388,10 +440,10 @@ macro_rules! impl_iter {
     };
 }
 
-impl_iter!(RdictKeys, key);
-impl_iter!(RdictValues, value);
+impl_iter_single!(RdictKeys, key);
+impl_iter_single!(RdictValues, value);
+impl_iter_single!(RdictColumns, columns);
 impl_iter!(RdictItems, key, value);
-impl_iter!(RdictColumns, columns);
 impl_iter!(RdictEntities, key, columns);
 
 unsafe impl Sync for RdictIter {}

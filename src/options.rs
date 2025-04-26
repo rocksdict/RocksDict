@@ -638,13 +638,13 @@ impl OptionsPy {
         ignore_unknown_options = false,
         cache = CachePy::new_lru_cache(8 * 1024 * 1204)
     ))]
-    pub fn load_latest(
+    pub fn load_latest<'py>(
         path: &str,
         env: EnvPy,
         ignore_unknown_options: bool,
         cache: CachePy,
-        py: Python,
-    ) -> PyResult<PyObject> {
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyTuple>> {
         let (options, column_families) =
             OptionsPy::load_latest_inner(path, env, ignore_unknown_options, cache)?;
         let options = Py::new(py, options)?;
@@ -652,8 +652,8 @@ impl OptionsPy {
         for (name, opt) in column_families {
             columns.set_item(name, Py::new(py, opt)?)?
         }
-        let returned_tuple = PyTuple::new(py, [options.to_object(py), columns.to_object(py)])?;
-        Ok(returned_tuple.to_object(py))
+        let returned_tuple = PyTuple::new(py, [options.into_any(), columns.into_any().unbind()])?;
+        Ok(returned_tuple)
     }
 
     /// By default, RocksDB uses only one background thread for flush and
@@ -2191,14 +2191,14 @@ impl ReadOptionsPy {
     }
 
     /// Sets the upper bound for an iterator.
-    pub fn set_iterate_upper_bound(&mut self, key: &Bound<PyAny>, py: Python) -> PyResult<()> {
-        self.iterate_upper_bound = key.to_object(py);
+    pub fn set_iterate_upper_bound(&mut self, key: Bound<PyAny>) -> PyResult<()> {
+        self.iterate_upper_bound = key.into_any().unbind();
         Ok(())
     }
 
     /// Sets the lower bound for an iterator.
-    pub fn set_iterate_lower_bound(&mut self, key: &Bound<PyAny>, py: Python) -> PyResult<()> {
-        self.iterate_upper_bound = key.to_object(py);
+    pub fn set_iterate_lower_bound(&mut self, key: Bound<PyAny>) -> PyResult<()> {
+        self.iterate_upper_bound = key.into_any().unbind();
         Ok(())
     }
 

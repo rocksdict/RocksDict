@@ -123,38 +123,41 @@ fn py_to_value_types<'a, 'b>(value: &'a Bound<'b, PyAny>) -> PyResult<ValueTypes
 
 /// this function is used for decoding value from bytes
 #[inline(always)]
-pub(crate) fn decode_value(
-    py: Python,
+pub(crate) fn decode_value<'py>(
+    py: Python<'py>,
     bytes: &[u8],
     loads: &PyObject,
     raw_mode: bool,
-) -> PyResult<PyObject> {
+) -> PyResult<Bound<'py, PyAny>> {
     // directly return bytes if raw_mode is true
     if raw_mode {
-        return Ok(PyBytes::new(py, bytes).to_object(py));
+        return Ok(PyBytes::new(py, bytes).into_any());
     }
     match bytes.first() {
         // deal with empty value returned by entities
-        None => Ok(PyString::new(py, "").to_object(py)),
+        None => Ok(PyString::new(py, "").into_any()),
         Some(byte) => match byte {
-            1 => Ok(PyBytes::new(py, &bytes[1..]).to_object(py)),
+            1 => Ok(PyBytes::new(py, &bytes[1..]).into_any()),
             2 => {
                 let string = match String::from_utf8(bytes[1..].to_vec()) {
                     Ok(s) => s,
                     Err(_) => return Err(PyException::new_err("utf-8 decoding error")),
                 };
-                Ok(PyString::new(py, &string).to_object(py))
+                Ok(PyString::new(py, &string).into_any())
             }
             3 => {
                 let big_int = BigInt::from_signed_bytes_be(&bytes[1..]);
-                Ok(big_int.to_object(py))
+                Ok(big_int.into_pyobject(py)?.into_any())
             }
             4 => {
                 let float: f64 = f64::from_be_bytes(bytes[1..].try_into().unwrap());
-                Ok(float.into_py(py))
+                Ok(float.into_pyobject(py)?.into_any())
             }
-            5 => Ok(PyBool::new(py, bytes[1] != 0).to_object(py)),
-            6 => loads.call1(py, (PyBytes::new(py, &bytes[1..]),)),
+            5 => Ok(PyBool::new(py, bytes[1] != 0).to_owned().into_any()),
+            6 => Ok(loads
+                .call1(py, (PyBytes::new(py, &bytes[1..]),))?
+                .bind(py)
+                .to_owned()),
             _ => Err(PyException::new_err("Unknown value type")),
         },
     }

@@ -132,7 +132,7 @@ impl Snapshot {
     }
 
     /// read from snapshot
-    fn __getitem__(&self, key: &Bound<PyAny>, py: Python) -> PyResult<PyObject> {
+    fn __getitem__<'py>(&self, key: &Bound<PyAny>, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
         let db = self.get_db();
         let key = encode_key(key, self.raw_mode)?;
         let value_result = if let Some(cf) = &self.column_family {

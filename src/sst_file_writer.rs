@@ -57,7 +57,7 @@ impl SstFileWriterPy {
         let raw_mode = options.raw_mode;
         let options = &options.inner_opt;
         let writer = Self::create_raw(options, &env_options);
-        let pickle = PyModule::import(py, "pickle")?.to_object(py);
+        let pickle = PyModule::import(py, "pickle")?.unbind();
         let pickle_dumps = pickle.getattr(py, "dumps")?;
 
         Ok(Self {
