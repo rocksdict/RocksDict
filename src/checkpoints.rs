@@ -80,3 +80,4 @@ impl Drop for CheckpointPy {
 }
 
 unsafe impl Send for CheckpointPy {}
+unsafe impl Sync for CheckpointPy {}

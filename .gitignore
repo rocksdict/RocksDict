@@ -1,7 +1,6 @@
 /target
 **/.DS_Store
 .idea
-Cargo.lock
 *.so
 __pycache__
 venv

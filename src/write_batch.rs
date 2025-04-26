@@ -55,7 +55,7 @@ impl WriteBatchPy {
     #[new]
     #[pyo3(signature = (raw_mode = false))]
     pub fn default(py: Python, raw_mode: bool) -> PyResult<Self> {
-        let pickle = PyModule::import_bound(py, "pickle")?.to_object(py);
+        let pickle = PyModule::import(py, "pickle")?.unbind();
         Ok(WriteBatchPy {
             inner: Some(WriteBatch::default()),
             default_column_family: None,
@@ -259,3 +259,5 @@ impl WriteBatchPy {
         }
     }
 }
+
+unsafe impl Sync for WriteBatchPy {}
