@@ -36,7 +36,7 @@ bindgen-static = ["rocksdb/bindgen-static"]
 lto = ["rocksdb/lto"]
 
 [dependencies.pyo3]
-version = "0.22"
+version = "0.24"
 features = ["py-clone", "extension-module", "num-bigint"]
 
 [profile.release]

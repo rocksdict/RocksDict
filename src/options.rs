@@ -648,11 +648,11 @@ impl OptionsPy {
         let (options, column_families) =
             OptionsPy::load_latest_inner(path, env, ignore_unknown_options, cache)?;
         let options = Py::new(py, options)?;
-        let columns = PyDict::new_bound(py);
+        let columns = PyDict::new(py);
         for (name, opt) in column_families {
             columns.set_item(name, Py::new(py, opt)?)?
         }
-        let returned_tuple = PyTuple::new_bound(py, [options.to_object(py), columns.to_object(py)]);
+        let returned_tuple = PyTuple::new(py, [options.to_object(py), columns.to_object(py)])?;
         Ok(returned_tuple.to_object(py))
     }
 
@@ -816,6 +816,62 @@ impl OptionsPy {
     ///         opts.set_compression_type(DBCompressionType.snappy())
     pub fn set_compression_type(&mut self, t: &DBCompressionTypePy) {
         self.inner_opt.set_compression_type(t.0)
+    }
+
+    /// Sets the bottom-most compression algorithm that will be used for
+    /// compressing blocks at the bottom-most level.
+    ///
+    /// Note that to actually enable bottom-most compression configuration after
+    /// setting the compression type, it needs to be enabled by calling
+    /// [`set_bottommost_compression_options`](#method.set_bottommost_compression_options) or
+    /// [`set_bottommost_zstd_max_train_bytes`](#method.set_bottommost_zstd_max_train_bytes) method with `enabled` argument
+    /// set to `true`.
+    ///
+    ///
+    /// Example:
+    ///     ::
+    ///
+    ///         from rocksdict import Options, DBCompressionType
+    ///
+    ///         opts = Options()
+    ///         opts.set_bottommost_compression_type(DBCompressionType.snappy())
+    pub fn set_bottommost_compression_type(&mut self, t: &DBCompressionTypePy) {
+        self.inner_opt.set_bottommost_compression_type(t.0)
+    }
+
+    /// Sets compression options for blocks at the bottom-most level.  Meaning
+    /// of all settings is the same as in [`set_compression_options`](#method.set_compression_options) method but
+    /// affect only the bottom-most compression which is set using
+    /// [`set_bottommost_compression_type`](#method.set_bottommost_compression_type) method.
+    pub fn set_bottommost_compression_options(
+        &mut self,
+        w_bits: c_int,
+        level: c_int,
+        strategy: c_int,
+        max_dict_bytes: c_int,
+        enable: bool,
+    ) {
+        self.inner_opt.set_bottommost_compression_options(
+            w_bits,
+            level,
+            strategy,
+            max_dict_bytes,
+            enable,
+        )
+    }
+
+    /// Sets maximum size of training data passed to zstd's dictionary trainer
+    /// when compressing the bottom-most level. Using zstd's dictionary trainer
+    /// can achieve even better compression ratio improvements than using
+    /// `max_dict_bytes` alone.
+    ///
+    /// The training data will be used to generate a dictionary of
+    /// `max_dict_bytes`.
+    ///
+    /// Default: 0.
+    pub fn set_bottommost_zstd_max_train_bytes(&mut self, value: c_int, enable: bool) {
+        self.inner_opt
+            .set_bottommost_zstd_max_train_bytes(value, enable)
     }
 
     /// Different levels can have different compression policies. There

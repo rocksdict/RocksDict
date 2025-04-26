@@ -131,19 +131,19 @@ pub(crate) fn decode_value(
 ) -> PyResult<PyObject> {
     // directly return bytes if raw_mode is true
     if raw_mode {
-        return Ok(PyBytes::new_bound(py, bytes).to_object(py));
+        return Ok(PyBytes::new(py, bytes).to_object(py));
     }
     match bytes.first() {
         // deal with empty value returned by entities
-        None => Ok(PyString::new_bound(py, "").to_object(py)),
+        None => Ok(PyString::new(py, "").to_object(py)),
         Some(byte) => match byte {
-            1 => Ok(PyBytes::new_bound(py, &bytes[1..]).to_object(py)),
+            1 => Ok(PyBytes::new(py, &bytes[1..]).to_object(py)),
             2 => {
                 let string = match String::from_utf8(bytes[1..].to_vec()) {
                     Ok(s) => s,
                     Err(_) => return Err(PyException::new_err("utf-8 decoding error")),
                 };
-                Ok(PyString::new_bound(py, &string).to_object(py))
+                Ok(PyString::new(py, &string).to_object(py))
             }
             3 => {
                 let big_int = BigInt::from_signed_bytes_be(&bytes[1..]);
@@ -153,8 +153,8 @@ pub(crate) fn decode_value(
                 let float: f64 = f64::from_be_bytes(bytes[1..].try_into().unwrap());
                 Ok(float.into_py(py))
             }
-            5 => Ok(PyBool::new_bound(py, bytes[1] != 0).to_object(py)),
-            6 => loads.call1(py, (PyBytes::new_bound(py, &bytes[1..]),)),
+            5 => Ok(PyBool::new(py, bytes[1] != 0).to_object(py)),
+            6 => loads.call1(py, (PyBytes::new(py, &bytes[1..]),)),
             _ => Err(PyException::new_err("Unknown value type")),
         },
     }

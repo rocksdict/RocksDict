@@ -193,7 +193,7 @@ impl Rdict {
         access_type: AccessType,
         py: Python,
     ) -> PyResult<Self> {
-        let pickle = PyModule::import_bound(py, "pickle")?.to_object(py);
+        let pickle = PyModule::import(py, "pickle")?.to_object(py);
         // create db path if missing
         fs::create_dir_all(path).map_err(|e| PyException::new_err(e.to_string()))?;
         // load options
@@ -477,11 +477,11 @@ impl Rdict {
                 }
             }
             Some(columns) => {
-                let result = PyList::empty_bound(py);
+                let result = PyList::empty(py);
                 for column in columns.iter() {
                     let name = decode_value(py, column.name, &self.loads, self.opt_py.raw_mode)?;
                     let value = decode_value(py, column.value, &self.loads, self.opt_py.raw_mode)?;
-                    result.append(PyTuple::new_bound(py, [name, value]))?;
+                    result.append(PyTuple::new(py, [name, value])?)?;
                 }
                 Ok(Some(result.to_object(py)))
             }
@@ -1293,7 +1293,7 @@ impl Rdict {
         let db = self.get_db()?;
         match db.live_files() {
             Ok(lfs) => {
-                let result = PyList::empty_bound(py);
+                let result = PyList::empty(py);
                 for lf in lfs {
                     result.append(display_live_file_dict(
                         lf,
@@ -1352,7 +1352,7 @@ fn display_live_file_dict(
     pickle_loads: &PyObject,
     raw_mode: bool,
 ) -> PyResult<PyObject> {
-    let result = PyDict::new_bound(py);
+    let result = PyDict::new(py);
     let start_key = match lf.start_key {
         None => py.None(),
         Some(k) => decode_value(py, &k, pickle_loads, raw_mode)?,
@@ -1386,7 +1386,7 @@ fn get_batch_inner<'a>(
         keys.push(encode_key(key, raw_mode)?);
     }
     let values = py.allow_threads(|| db.batched_multi_get_cf_opt(cf, &keys, false, read_opt));
-    let result = PyList::empty_bound(py);
+    let result = PyList::empty(py);
     for v in values {
         match v {
             Ok(value) => match value {

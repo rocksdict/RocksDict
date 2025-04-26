@@ -10,7 +10,7 @@ use pyo3::prelude::*;
 use pyo3::types::{PyList, PyTuple};
 use rocksdb::{AsColumnFamilyRef, Iterable as _, UnboundColumnFamily};
 use std::ptr::null_mut;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 #[pyclass]
 #[allow(dead_code)]
@@ -18,7 +18,7 @@ pub(crate) struct RdictIter {
     /// iterator must keep a reference count of DB to keep DB alive.
     pub(crate) db: DbReferenceHolder,
 
-    pub(crate) inner: *mut librocksdb_sys::rocksdb_iterator_t,
+    pub(crate) inner: Mutex<*mut librocksdb_sys::rocksdb_iterator_t>,
 
     /// When iterate_upper_bound is set, the inner C iterator keeps a pointer to the upper bound
     /// inside `_readopts`. Storing this makes sure the upper bound is always alive when the
@@ -77,16 +77,18 @@ impl RdictIter {
             .ok_or_else(|| DbClosedError::new_err("DB instance already closed"))?
             .inner();
 
+        let iter_inner = unsafe {
+            match cf {
+                None => librocksdb_sys::rocksdb_create_iterator(db_inner, readopts.0),
+                Some(cf) => {
+                    librocksdb_sys::rocksdb_create_iterator_cf(db_inner, readopts.0, cf.inner())
+                }
+            }
+        };
+
         Ok(RdictIter {
             db: db.clone(),
-            inner: unsafe {
-                match cf {
-                    None => librocksdb_sys::rocksdb_create_iterator(db_inner, readopts.0),
-                    Some(cf) => {
-                        librocksdb_sys::rocksdb_create_iterator_cf(db_inner, readopts.0, cf.inner())
-                    }
-                }
-            },
+            inner: Mutex::new(iter_inner),
             readopts,
             loads: pickle_loads.clone(),
             raw_mode,
@@ -104,7 +106,7 @@ impl RdictIter {
     /// return an error when `valid` is `true`.
     #[inline]
     pub fn valid(&self) -> bool {
-        unsafe { librocksdb_sys::rocksdb_iter_valid(self.inner) != 0 }
+        unsafe { librocksdb_sys::rocksdb_iter_valid(*self.inner.lock().unwrap()) != 0 }
     }
 
     /// Returns an error `Result` if the iterator has encountered an error
@@ -115,7 +117,7 @@ impl RdictIter {
     pub fn status(&self) -> PyResult<()> {
         let mut err: *mut c_char = null_mut();
         unsafe {
-            librocksdb_sys::rocksdb_iter_get_error(self.inner, &mut err);
+            librocksdb_sys::rocksdb_iter_get_error(*self.inner.lock().unwrap(), &mut err);
         }
         if !err.is_null() {
             Err(PyException::new_err(error_message(err)))
@@ -150,7 +152,7 @@ impl RdictIter {
     ///         Rdict.destroy(path, Options())
     pub fn seek_to_first(&mut self) {
         unsafe {
-            librocksdb_sys::rocksdb_iter_seek_to_first(self.inner);
+            librocksdb_sys::rocksdb_iter_seek_to_first(*self.inner.lock().unwrap());
         }
     }
 
@@ -180,7 +182,7 @@ impl RdictIter {
     ///         Rdict.destroy(path, Options())
     pub fn seek_to_last(&mut self) {
         unsafe {
-            librocksdb_sys::rocksdb_iter_seek_to_last(self.inner);
+            librocksdb_sys::rocksdb_iter_seek_to_last(*self.inner.lock().unwrap());
         }
     }
 
@@ -208,7 +210,7 @@ impl RdictIter {
         let key = encode_key(key, self.raw_mode)?;
         unsafe {
             librocksdb_sys::rocksdb_iter_seek(
-                self.inner,
+                *self.inner.lock().unwrap(),
                 key.as_ptr() as *const c_char,
                 key.len() as size_t,
             );
@@ -241,7 +243,7 @@ impl RdictIter {
         let key = encode_key(key, self.raw_mode)?;
         unsafe {
             librocksdb_sys::rocksdb_iter_seek_for_prev(
-                self.inner,
+                *self.inner.lock().unwrap(),
                 key.as_ptr() as *const c_char,
                 key.len() as size_t,
             );
@@ -252,14 +254,14 @@ impl RdictIter {
     /// Seeks to the next key.
     pub fn next(&mut self) {
         unsafe {
-            librocksdb_sys::rocksdb_iter_next(self.inner);
+            librocksdb_sys::rocksdb_iter_next(*self.inner.lock().unwrap());
         }
     }
 
     /// Seeks to the previous key.
     pub fn prev(&mut self) {
         unsafe {
-            librocksdb_sys::rocksdb_iter_prev(self.inner);
+            librocksdb_sys::rocksdb_iter_prev(*self.inner.lock().unwrap());
         }
     }
 
@@ -272,7 +274,8 @@ impl RdictIter {
                 let mut key_len: size_t = 0;
                 let key_len_ptr: *mut size_t = &mut key_len;
                 let key_ptr =
-                    librocksdb_sys::rocksdb_iter_key(self.inner, key_len_ptr) as *const c_uchar;
+                    librocksdb_sys::rocksdb_iter_key(*self.inner.lock().unwrap(), key_len_ptr)
+                        as *const c_uchar;
                 let key = slice::from_raw_parts(key_ptr, key_len);
                 Ok(decode_value(py, key, &self.loads, self.raw_mode)?)
             }
@@ -290,7 +293,8 @@ impl RdictIter {
                 let mut val_len: size_t = 0;
                 let val_len_ptr: *mut size_t = &mut val_len;
                 let val_ptr =
-                    librocksdb_sys::rocksdb_iter_value(self.inner, val_len_ptr) as *const c_uchar;
+                    librocksdb_sys::rocksdb_iter_value(*self.inner.lock().unwrap(), val_len_ptr)
+                        as *const c_uchar;
                 let value = slice::from_raw_parts(val_ptr, val_len);
                 Ok(decode_value(py, value, &self.loads, self.raw_mode)?)
             }
@@ -309,13 +313,15 @@ impl RdictIter {
     pub fn columns(&self, py: Python) -> PyResult<PyObject> {
         if self.valid() {
             let columns = unsafe {
-                rocksdb::WideColumns::from_c(librocksdb_sys::rocksdb_iter_columns(self.inner))
+                rocksdb::WideColumns::from_c(librocksdb_sys::rocksdb_iter_columns(
+                    *self.inner.lock().unwrap(),
+                ))
             };
-            let result = PyList::empty_bound(py);
+            let result = PyList::empty(py);
             for column in columns.iter() {
                 let name = decode_value(py, column.name, &self.loads, self.raw_mode)?;
                 let value = decode_value(py, column.value, &self.loads, self.raw_mode)?;
-                result.append(PyTuple::new_bound(py, [name, value]))?;
+                result.append(PyTuple::new(py, [name, value])?)?;
             }
             Ok(result.to_object(py))
         } else {
@@ -327,7 +333,7 @@ impl RdictIter {
 impl Drop for RdictIter {
     fn drop(&mut self) {
         unsafe {
-            librocksdb_sys::rocksdb_iter_destroy(self.inner);
+            librocksdb_sys::rocksdb_iter_destroy(*self.inner.lock().unwrap());
         }
     }
 }
@@ -387,3 +393,5 @@ impl_iter!(RdictValues, value);
 impl_iter!(RdictItems, key, value);
 impl_iter!(RdictColumns, columns);
 impl_iter!(RdictEntities, key, columns);
+
+unsafe impl Sync for RdictIter {}
