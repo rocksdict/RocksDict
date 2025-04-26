@@ -823,8 +823,8 @@ impl OptionsPy {
     ///
     /// Note that to actually enable bottom-most compression configuration after
     /// setting the compression type, it needs to be enabled by calling
-    /// [`set_bottommost_compression_options`](#method.set_bottommost_compression_options) or
-    /// [`set_bottommost_zstd_max_train_bytes`](#method.set_bottommost_zstd_max_train_bytes) method with `enabled` argument
+    /// [`set_bottommost_compression_options`] or
+    /// [`set_bottommost_zstd_max_train_bytes`] method with `enabled` argument
     /// set to `true`.
     ///
     ///
@@ -840,9 +840,9 @@ impl OptionsPy {
     }
 
     /// Sets compression options for blocks at the bottom-most level.  Meaning
-    /// of all settings is the same as in [`set_compression_options`](#method.set_compression_options) method but
+    /// of all settings is the same as in [`set_compression_options`] method but
     /// affect only the bottom-most compression which is set using
-    /// [`set_bottommost_compression_type`](#method.set_bottommost_compression_type) method.
+    /// [`set_bottommost_compression_type`] method.
     pub fn set_bottommost_compression_options(
         &mut self,
         w_bits: c_int,

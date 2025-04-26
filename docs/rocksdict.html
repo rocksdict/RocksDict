@@ -228,22 +228,22 @@
                     <a class="class" href="#WriteOptions">WriteOptions</a>
                             <ul class="memberlist">
                         <li>
-                                <a class="variable" href="#WriteOptions.low_pri">low_pri</a>
+                                <a class="variable" href="#WriteOptions.sync">sync</a>
                         </li>
                         <li>
-                                <a class="variable" href="#WriteOptions.sync">sync</a>
+                                <a class="variable" href="#WriteOptions.disable_wal">disable_wal</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#WriteOptions.ignore_missing_column_families">ignore_missing_column_families</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#WriteOptions.low_pri">low_pri</a>
                         </li>
                         <li>
                                 <a class="variable" href="#WriteOptions.no_slowdown">no_slowdown</a>
                         </li>
                         <li>
                                 <a class="variable" href="#WriteOptions.memtable_insert_hint_per_batch">memtable_insert_hint_per_batch</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#WriteOptions.ignore_missing_column_families">ignore_missing_column_families</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#WriteOptions.disable_wal">disable_wal</a>
                         </li>
                 </ul>
 
@@ -340,6 +340,15 @@
                         </li>
                         <li>
                                 <a class="function" href="#Options.set_compression_type">set_compression_type</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#Options.set_bottommost_compression_type">set_bottommost_compression_type</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#Options.set_bottommost_compression_options">set_bottommost_compression_options</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#Options.set_bottommost_zstd_max_train_bytes">set_bottommost_zstd_max_train_bytes</a>
                         </li>
                         <li>
                                 <a class="function" href="#Options.set_compression_per_level">set_compression_per_level</a>
@@ -801,28 +810,28 @@
                     <a class="class" href="#PlainTableFactoryOptions">PlainTableFactoryOptions</a>
                             <ul class="memberlist">
                         <li>
-                                <a class="variable" href="#PlainTableFactoryOptions.bloom_bits_per_key">bloom_bits_per_key</a>
+                                <a class="variable" href="#PlainTableFactoryOptions.full_scan_mode">full_scan_mode</a>
                         </li>
                         <li>
-                                <a class="variable" href="#PlainTableFactoryOptions.huge_page_tlb_size">huge_page_tlb_size</a>
+                                <a class="variable" href="#PlainTableFactoryOptions.store_index_in_file">store_index_in_file</a>
                         </li>
                         <li>
                                 <a class="variable" href="#PlainTableFactoryOptions.hash_table_ratio">hash_table_ratio</a>
                         </li>
                         <li>
-                                <a class="variable" href="#PlainTableFactoryOptions.full_scan_mode">full_scan_mode</a>
+                                <a class="variable" href="#PlainTableFactoryOptions.index_sparseness">index_sparseness</a>
                         </li>
                         <li>
-                                <a class="variable" href="#PlainTableFactoryOptions.index_sparseness">index_sparseness</a>
+                                <a class="variable" href="#PlainTableFactoryOptions.bloom_bits_per_key">bloom_bits_per_key</a>
                         </li>
                         <li>
                                 <a class="variable" href="#PlainTableFactoryOptions.encoding_type">encoding_type</a>
                         </li>
                         <li>
-                                <a class="variable" href="#PlainTableFactoryOptions.user_key_length">user_key_length</a>
+                                <a class="variable" href="#PlainTableFactoryOptions.huge_page_tlb_size">huge_page_tlb_size</a>
                         </li>
                         <li>
-                                <a class="variable" href="#PlainTableFactoryOptions.store_index_in_file">store_index_in_file</a>
+                                <a class="variable" href="#PlainTableFactoryOptions.user_key_length">user_key_length</a>
                         </li>
                 </ul>
 
@@ -852,19 +861,19 @@
                     <a class="class" href="#UniversalCompactOptions">UniversalCompactOptions</a>
                             <ul class="memberlist">
                         <li>
-                                <a class="variable" href="#UniversalCompactOptions.stop_style">stop_style</a>
+                                <a class="variable" href="#UniversalCompactOptions.max_merge_width">max_merge_width</a>
                         </li>
                         <li>
                                 <a class="variable" href="#UniversalCompactOptions.min_merge_width">min_merge_width</a>
                         </li>
                         <li>
-                                <a class="variable" href="#UniversalCompactOptions.max_size_amplification_percent">max_size_amplification_percent</a>
-                        </li>
-                        <li>
                                 <a class="variable" href="#UniversalCompactOptions.size_ratio">size_ratio</a>
                         </li>
                         <li>
-                                <a class="variable" href="#UniversalCompactOptions.max_merge_width">max_merge_width</a>
+                                <a class="variable" href="#UniversalCompactOptions.max_size_amplification_percent">max_size_amplification_percent</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#UniversalCompactOptions.stop_style">stop_style</a>
                         </li>
                         <li>
                                 <a class="variable" href="#UniversalCompactOptions.compression_size_percent">compression_size_percent</a>
@@ -2962,6 +2971,57 @@ del db
 </div>
 
 
+                            <div id="WriteOptions.sync" class="classattr">
+                                <div class="attr variable">
+            <span class="name">sync</span>
+
+        
+    </div>
+    <a class="headerlink" href="#WriteOptions.sync"></a>
+    
+            <div class="docstring"><p>Sets the sync mode. If true, the write will be flushed
+from the operating system buffer cache before the write is considered complete.
+If this flag is true, writes will be slower.</p>
+
+<p>Default: false</p>
+</div>
+
+
+                            </div>
+                            <div id="WriteOptions.disable_wal" class="classattr">
+                                <div class="attr variable">
+            <span class="name">disable_wal</span>
+
+        
+    </div>
+    <a class="headerlink" href="#WriteOptions.disable_wal"></a>
+    
+            <div class="docstring"><p>Sets whether WAL should be active or not.
+If true, writes will not first go to the write ahead log,
+and the write may got lost after a crash.</p>
+
+<p>Default: false</p>
+</div>
+
+
+                            </div>
+                            <div id="WriteOptions.ignore_missing_column_families" class="classattr">
+                                <div class="attr variable">
+            <span class="name">ignore_missing_column_families</span>
+
+        
+    </div>
+    <a class="headerlink" href="#WriteOptions.ignore_missing_column_families"></a>
+    
+            <div class="docstring"><p>If true and if user is trying to write to column families that don't exist (they were dropped),
+ignore the write (don't return an error). If there are multiple writes in a WriteBatch,
+other writes will succeed.</p>
+
+<p>Default: false</p>
+</div>
+
+
+                            </div>
                             <div id="WriteOptions.low_pri" class="classattr">
                                 <div class="attr variable">
             <span class="name">low_pri</span>
@@ -2975,23 +3035,6 @@ behind. In this case, no_slowdown = true, the request will be cancelled
 immediately with Status::Incomplete() returned. Otherwise, it will be
 slowed down. The slowdown value is determined by RocksDB to guarantee
 it introduces minimum impacts to high priority writes.</p>
-
-<p>Default: false</p>
-</div>
-
-
-                            </div>
-                            <div id="WriteOptions.sync" class="classattr">
-                                <div class="attr variable">
-            <span class="name">sync</span>
-
-        
-    </div>
-    <a class="headerlink" href="#WriteOptions.sync"></a>
-    
-            <div class="docstring"><p>Sets the sync mode. If true, the write will be flushed
-from the operating system buffer cache before the write is considered complete.
-If this flag is true, writes will be slower.</p>
 
 <p>Default: false</p>
 </div>
@@ -3027,40 +3070,6 @@ memtable as hints in concurrent write. It can improve write performance
 in concurrent writes if keys in one writebatch are sequential. In
 non-concurrent writes (when concurrent_memtable_writes is false) this
 option will be ignored.</p>
-
-<p>Default: false</p>
-</div>
-
-
-                            </div>
-                            <div id="WriteOptions.ignore_missing_column_families" class="classattr">
-                                <div class="attr variable">
-            <span class="name">ignore_missing_column_families</span>
-
-        
-    </div>
-    <a class="headerlink" href="#WriteOptions.ignore_missing_column_families"></a>
-    
-            <div class="docstring"><p>If true and if user is trying to write to column families that don't exist (they were dropped),
-ignore the write (don't return an error). If there are multiple writes in a WriteBatch,
-other writes will succeed.</p>
-
-<p>Default: false</p>
-</div>
-
-
-                            </div>
-                            <div id="WriteOptions.disable_wal" class="classattr">
-                                <div class="attr variable">
-            <span class="name">disable_wal</span>
-
-        
-    </div>
-    <a class="headerlink" href="#WriteOptions.disable_wal"></a>
-    
-            <div class="docstring"><p>Sets whether WAL should be active or not.
-If true, writes will not first go to the write ahead log,
-and the write may got lost after a crash.</p>
 
 <p>Default: false</p>
 </div>
@@ -3832,6 +3841,81 @@ opts = Options()
 opts.set_compression_type(<a href="#DBCompressionType.snappy">DBCompressionType.snappy()</a>)
 </code></pre>
 </blockquote>
+</div>
+
+
+                            </div>
+                            <div id="Options.set_bottommost_compression_type" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_bottommost_compression_type</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="o">/</span>, </span><span class="param"><span class="n">t</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#Options.set_bottommost_compression_type"></a>
+    
+            <div class="docstring"><p>Sets the bottom-most compression algorithm that will be used for
+compressing blocks at the bottom-most level.</p>
+
+<p>Note that to actually enable bottom-most compression configuration after
+setting the compression type, it needs to be enabled by calling
+[<code><a href="#Options.set_bottommost_compression_options">set_bottommost_compression_options</a></code>] or
+[<code><a href="#Options.set_bottommost_zstd_max_train_bytes">set_bottommost_zstd_max_train_bytes</a></code>] method with <code>enabled</code> argument
+set to <code>true</code>.</p>
+
+<h6 id="example">Example:</h6>
+
+<blockquote>
+  <p>::</p>
+
+<pre><code>from rocksdict import Options, DBCompressionType
+
+opts = Options()
+opts.set_bottommost_compression_type(<a href="#DBCompressionType.snappy">DBCompressionType.snappy()</a>)
+</code></pre>
+</blockquote>
+</div>
+
+
+                            </div>
+                            <div id="Options.set_bottommost_compression_options" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_bottommost_compression_options</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="o">/</span>, </span><span class="param"><span class="n">w_bits</span>, </span><span class="param"><span class="n">level</span>, </span><span class="param"><span class="n">strategy</span>, </span><span class="param"><span class="n">max_dict_bytes</span>, </span><span class="param"><span class="n">enable</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#Options.set_bottommost_compression_options"></a>
+    
+            <div class="docstring"><p>Sets compression options for blocks at the bottom-most level.  Meaning
+of all settings is the same as in [<code><a href="#Options.set_compression_options">set_compression_options</a></code>] method but
+affect only the bottom-most compression which is set using
+[<code><a href="#Options.set_bottommost_compression_type">set_bottommost_compression_type</a></code>] method.</p>
+</div>
+
+
+                            </div>
+                            <div id="Options.set_bottommost_zstd_max_train_bytes" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_bottommost_zstd_max_train_bytes</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="o">/</span>, </span><span class="param"><span class="n">value</span>, </span><span class="param"><span class="n">enable</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#Options.set_bottommost_zstd_max_train_bytes"></a>
+    
+            <div class="docstring"><p>Sets maximum size of training data passed to zstd's dictionary trainer
+when compressing the bottom-most level. Using zstd's dictionary trainer
+can achieve even better compression ratio improvements than using
+<code>max_dict_bytes</code> alone.</p>
+
+<p>The training data will be used to generate a dictionary of
+<code>max_dict_bytes</code>.</p>
+
+<p>Default: 0.</p>
 </div>
 
 
@@ -6829,24 +6913,24 @@ information.</p>
 </div>
 
 
-                            <div id="PlainTableFactoryOptions.bloom_bits_per_key" class="classattr">
+                            <div id="PlainTableFactoryOptions.full_scan_mode" class="classattr">
                                 <div class="attr variable">
-            <span class="name">bloom_bits_per_key</span>
+            <span class="name">full_scan_mode</span>
 
         
     </div>
-    <a class="headerlink" href="#PlainTableFactoryOptions.bloom_bits_per_key"></a>
+    <a class="headerlink" href="#PlainTableFactoryOptions.full_scan_mode"></a>
     
     
 
                             </div>
-                            <div id="PlainTableFactoryOptions.huge_page_tlb_size" class="classattr">
+                            <div id="PlainTableFactoryOptions.store_index_in_file" class="classattr">
                                 <div class="attr variable">
-            <span class="name">huge_page_tlb_size</span>
+            <span class="name">store_index_in_file</span>
 
         
     </div>
-    <a class="headerlink" href="#PlainTableFactoryOptions.huge_page_tlb_size"></a>
+    <a class="headerlink" href="#PlainTableFactoryOptions.store_index_in_file"></a>
     
     
 
@@ -6862,17 +6946,6 @@ information.</p>
     
 
                             </div>
-                            <div id="PlainTableFactoryOptions.full_scan_mode" class="classattr">
-                                <div class="attr variable">
-            <span class="name">full_scan_mode</span>
-
-        
-    </div>
-    <a class="headerlink" href="#PlainTableFactoryOptions.full_scan_mode"></a>
-    
-    
-
-                            </div>
                             <div id="PlainTableFactoryOptions.index_sparseness" class="classattr">
                                 <div class="attr variable">
             <span class="name">index_sparseness</span>
@@ -6880,6 +6953,17 @@ information.</p>
         
     </div>
     <a class="headerlink" href="#PlainTableFactoryOptions.index_sparseness"></a>
+    
+    
+
+                            </div>
+                            <div id="PlainTableFactoryOptions.bloom_bits_per_key" class="classattr">
+                                <div class="attr variable">
+            <span class="name">bloom_bits_per_key</span>
+
+        
+    </div>
+    <a class="headerlink" href="#PlainTableFactoryOptions.bloom_bits_per_key"></a>
     
     
 
@@ -6895,6 +6979,17 @@ information.</p>
     
 
                             </div>
+                            <div id="PlainTableFactoryOptions.huge_page_tlb_size" class="classattr">
+                                <div class="attr variable">
+            <span class="name">huge_page_tlb_size</span>
+
+        
+    </div>
+    <a class="headerlink" href="#PlainTableFactoryOptions.huge_page_tlb_size"></a>
+    
+    
+
+                            </div>
                             <div id="PlainTableFactoryOptions.user_key_length" class="classattr">
                                 <div class="attr variable">
             <span class="name">user_key_length</span>
@@ -6902,17 +6997,6 @@ information.</p>
         
     </div>
     <a class="headerlink" href="#PlainTableFactoryOptions.user_key_length"></a>
-    
-    
-
-                            </div>
-                            <div id="PlainTableFactoryOptions.store_index_in_file" class="classattr">
-                                <div class="attr variable">
-            <span class="name">store_index_in_file</span>
-
-        
-    </div>
-    <a class="headerlink" href="#PlainTableFactoryOptions.store_index_in_file"></a>
     
     
 
@@ -7040,17 +7124,17 @@ Default: true</p>
     
     
 
-                            <div id="UniversalCompactOptions.stop_style" class="classattr">
+                            <div id="UniversalCompactOptions.max_merge_width" class="classattr">
                                 <div class="attr variable">
-            <span class="name">stop_style</span>
+            <span class="name">max_merge_width</span>
 
         
     </div>
-    <a class="headerlink" href="#UniversalCompactOptions.stop_style"></a>
+    <a class="headerlink" href="#UniversalCompactOptions.max_merge_width"></a>
     
-            <div class="docstring"><p>Sets the algorithm used to stop picking files into a single compaction run.</p>
+            <div class="docstring"><p>Sets the maximum number of files in a single compaction run.</p>
 
-<p>Default: ::Total</p>
+<p>Default: UINT_MAX</p>
 </div>
 
 
@@ -7066,6 +7150,23 @@ Default: true</p>
             <div class="docstring"><p>Sets the minimum number of files in a single compaction run.</p>
 
 <p>Default: 2</p>
+</div>
+
+
+                            </div>
+                            <div id="UniversalCompactOptions.size_ratio" class="classattr">
+                                <div class="attr variable">
+            <span class="name">size_ratio</span>
+
+        
+    </div>
+    <a class="headerlink" href="#UniversalCompactOptions.size_ratio"></a>
+    
+            <div class="docstring"><p>Sets the percentage flexibility while comparing file size.
+If the candidate file(s) size is 1% smaller than the next file's size,
+then include next file into this candidate set.</p>
+
+<p>Default: 1</p>
 </div>
 
 
@@ -7094,34 +7195,17 @@ the earliest file contribute to the size amplification.</p>
 
 
                             </div>
-                            <div id="UniversalCompactOptions.size_ratio" class="classattr">
+                            <div id="UniversalCompactOptions.stop_style" class="classattr">
                                 <div class="attr variable">
-            <span class="name">size_ratio</span>
+            <span class="name">stop_style</span>
 
         
     </div>
-    <a class="headerlink" href="#UniversalCompactOptions.size_ratio"></a>
+    <a class="headerlink" href="#UniversalCompactOptions.stop_style"></a>
     
-            <div class="docstring"><p>Sets the percentage flexibility while comparing file size.
-If the candidate file(s) size is 1% smaller than the next file's size,
-then include next file into this candidate set.</p>
+            <div class="docstring"><p>Sets the algorithm used to stop picking files into a single compaction run.</p>
 
-<p>Default: 1</p>
-</div>
-
-
-                            </div>
-                            <div id="UniversalCompactOptions.max_merge_width" class="classattr">
-                                <div class="attr variable">
-            <span class="name">max_merge_width</span>
-
-        
-    </div>
-    <a class="headerlink" href="#UniversalCompactOptions.max_merge_width"></a>
-    
-            <div class="docstring"><p>Sets the maximum number of files in a single compaction run.</p>
-
-<p>Default: UINT_MAX</p>
+<p>Default: ::Total</p>
 </div>
 
 
