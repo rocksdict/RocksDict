@@ -27,7 +27,7 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.82.0
+          toolchain: 1.86.0
           default: true
       - name: Build wheels
         run: |
@@ -81,7 +81,7 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.82.0
+          toolchain: 1.86.0
           default: true
       - name: Build wheels
         run: |
@@ -131,12 +131,12 @@ jobs:
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v2
         with:
-          version: 18.1
-          directory: ${{ runner.temp }}/llvm-18.1
+          version: 19.1
+          directory: ${{ runner.temp }}/llvm-19.1
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.78.0
+          toolchain: 1.86.0
           default: true
       - name: Build wheels
         uses: messense/maturin-action@v1
@@ -144,10 +144,10 @@ jobs:
           target: ${{ matrix.target }}
           args: --release --out dist --no-default-features --features bindgen-runtime
         env:
-          LIBCLANG_PATH: ${{ runner.temp }}/llvm-18.1/lib
-          CC: ${{ runner.temp }}/llvm-18.1/bin/clang-cl
-          CXX: ${{ runner.temp }}/llvm-18.1/bin/clang-cl
-          AR: ${{ runner.temp }}/llvm-18.1/bin/llvm-lib
+          LIBCLANG_PATH: ${{ runner.temp }}/llvm-19.1/lib
+          CC: ${{ runner.temp }}/llvm-19.1/bin/clang-cl
+          CXX: ${{ runner.temp }}/llvm-19.1/bin/clang-cl
+          AR: ${{ runner.temp }}/llvm-19.1/bin/llvm-lib
           CFLAGS: "/clang:-flto=thin /clang:-O3 /clang:-fuse-ld=lld-link"
           CXXFLAGS: "/clang:-flto=thin /clang:-O3 /clang:-fuse-ld=lld-link"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=lld-link"
@@ -179,7 +179,7 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.82.0
+          rust-toolchain: 1.86.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: 2_28
@@ -222,7 +222,7 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.82.0
+          rust-toolchain: 1.86.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: 2014
@@ -264,7 +264,7 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.82.0
+          rust-toolchain: 1.86.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: 2_28
@@ -306,7 +306,7 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.82.0
+          rust-toolchain: 1.86.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: 2014
@@ -344,7 +344,7 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.82.0
+          rust-toolchain: 1.86.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
@@ -392,7 +392,7 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.82.0
+          rust-toolchain: 1.86.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
