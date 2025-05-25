@@ -324,6 +324,15 @@ class TestInt(unittest.TestCase):
             [self.ref_dict[k] for k in keys] + [None] * 3,
         )
 
+    def test_get_batch_default(self):
+        assert self.ref_dict is not None
+        assert self.test_dict is not None
+        keys = list(self.ref_dict.keys())[:100]
+        self.assertEqual(
+            self.test_dict.get(keys + ["no such key"] * 3, default=0),
+            [self.ref_dict[k] for k in keys] + [0] * 3,
+        )
+
     @classmethod
     def tearDownClass(cls):
         assert cls.opt is not None
@@ -493,6 +502,15 @@ class TestBytes(unittest.TestCase):
         self.assertEqual(
             self.test_dict[keys + ["no such key"] * 3],
             [self.ref_dict[k] for k in keys] + [None] * 3,
+        )
+
+    def test_get_batch_default(self):
+        assert self.ref_dict is not None
+        assert self.test_dict is not None
+        keys = list(self.ref_dict.keys())[:100]
+        self.assertEqual(
+            self.test_dict.get(keys + ["no such key"] * 3, default=b""),
+            [self.ref_dict[k] for k in keys] + [b""] * 3,
         )
 
     @classmethod
