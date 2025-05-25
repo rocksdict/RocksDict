@@ -398,6 +398,7 @@ impl Rdict {
             return Ok(get_batch_inner(
                 db,
                 keys,
+                default,
                 py,
                 read_opt,
                 &self.loads,
@@ -1380,6 +1381,7 @@ fn display_live_file_dict<'py>(
 fn get_batch_inner<'a>(
     db: &DB,
     key_list: &Bound<PyList>,
+    default: Option<Bound<'a, PyAny>>,
     py: Python<'a>,
     read_opt: &ReadOptions,
     loads: &PyObject,
@@ -1396,7 +1398,13 @@ fn get_batch_inner<'a>(
     for v in values {
         match v {
             Ok(value) => match value {
-                None => result.append(py.None())?,
+                None => {
+                    if let Some(default) = &default {
+                        result.append(default)?;
+                    } else {
+                        result.append(py.None())?;
+                    }
+                }
                 Some(slice) => result.append(decode_value(py, slice.as_ref(), loads, raw_mode)?)?,
             },
             Err(e) => return Err(PyException::new_err(e.to_string())),
