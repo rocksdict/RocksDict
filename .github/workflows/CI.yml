@@ -191,7 +191,7 @@ jobs:
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3"
-          CXXFLAGS: "-flto=thin -O3"
+          CXXFLAGS: "-flto=thin -O3 -L${DEVTOOLSET_ROOTPATH}/usr/lib/gcc/x86_64-redhat-linux/14"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
 
       - name: Install built wheel and test
@@ -354,16 +354,16 @@ jobs:
             apk update
             apk add ncurses-static
             apk add zlib-static
-            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/crtbeginS.o /usr/lib/crtbeginS.o
-            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/crtendS.o /usr/lib/crtendS.o
-            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/libgcc.a /usr/lib/libgcc.a
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3 -isystem/usr/include"
-          CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/13.2.1/ -isystem/usr/include -isystem/usr/include/c++/13.2.1/x86_64-alpine-linux-musl"
+          CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/14.2.0/ -isystem/usr/include -isystem/usr/include/c++/14.2.0/x86_64-alpine-linux-musl"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
           LLVM_CONFIG_PATH: /root/llvm_config.sh
           LIBCLANG_STATIC_PATH: /usr/local/lib
@@ -402,16 +402,16 @@ jobs:
             apk update
             apk add ncurses-static
             apk add zlib-static
-            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/crtbeginS.o /usr/lib/crtbeginS.o
-            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/crtendS.o /usr/lib/crtendS.o
-            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/libgcc.a /usr/lib/libgcc.a
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3 -isystem/usr/include"
-          CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/13.2.1/ -isystem/usr/include -isystem/usr/include/c++/13.2.1/aarch64-alpine-linux-musl"
+          CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/14.2.0/ -isystem/usr/include -isystem/usr/include/c++/14.2.0/aarch64-alpine-linux-musl"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
           LLVM_CONFIG_PATH: /root/llvm_config.sh
           LIBCLANG_STATIC_PATH: /usr/local/lib
