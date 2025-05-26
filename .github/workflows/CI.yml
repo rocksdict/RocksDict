@@ -441,6 +441,8 @@ jobs:
         musllinux_1_2_x86_64,
         musllinux_1_2_arm64,
       ]
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -457,3 +459,10 @@ jobs:
         run: |
           pip install --upgrade twine
           twine upload --skip-existing dist/*
+      - name: Github Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: wheels-*
