@@ -190,8 +190,8 @@ jobs:
           CC: /usr/local/bin/clang
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
-          CFLAGS: "-flto=thin -O3"
-          CXXFLAGS: "-flto=thin -O3"
+          CFLAGS: "-flto=thin -O3 -isysroot${DEVTOOLSET_ROOTPATH}"
+          CXXFLAGS: "-flto=thin -O3 -isysroot${DEVTOOLSET_ROOTPATH}"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
 
       - name: Install built wheel and test
@@ -233,8 +233,8 @@ jobs:
           CC: /usr/local/bin/clang
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
-          CFLAGS: "-flto=thin -O3"
-          CXXFLAGS: "-flto=thin -O3"
+          CFLAGS: "-flto=thin -O3 -isysroot${DEVTOOLSET_ROOTPATH}"
+          CXXFLAGS: "-flto=thin -O3 -isysroot${DEVTOOLSET_ROOTPATH}"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
       - name: Install built wheel and test
         run: |
@@ -275,8 +275,8 @@ jobs:
           CC: /usr/local/bin/clang
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
-          CFLAGS: "-flto=thin -O3"
-          CXXFLAGS: "-flto=thin -O3"
+          CFLAGS: "-flto=thin -O3 -isysroot${DEVTOOLSET_ROOTPATH}"
+          CXXFLAGS: "-flto=thin -O3 -isysroot${DEVTOOLSET_ROOTPATH}"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
       - name: Install built wheel and test
         run: |
@@ -317,8 +317,8 @@ jobs:
           CC: /usr/local/bin/clang
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
-          CFLAGS: "-flto=thin -O3"
-          CXXFLAGS: "-flto=thin -O3"
+          CFLAGS: "-flto=thin -O3 -isysroot${DEVTOOLSET_ROOTPATH}"
+          CXXFLAGS: "-flto=thin -O3 -isysroot${DEVTOOLSET_ROOTPATH}"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
       - name: Install built wheel and test
         run: |
