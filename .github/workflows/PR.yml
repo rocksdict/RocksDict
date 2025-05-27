@@ -185,6 +185,8 @@ jobs:
           manylinux: 2_28
           args: --release --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
           container: congyuwang/manylinux_2_28_x86_64:llvm-20.1.5
+          before-script-linux: |
+            export $LIBRARY_PATH = $LIBRARY_PATH:${DEVTOOLSET_ROOTPATH}/usr/lib/gcc/x86_64-redhat-linux/14
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
@@ -192,7 +194,7 @@ jobs:
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3"
           CXXFLAGS: "-flto=thin -O3"
-          RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld -Clink-arg=-L${DEVTOOLSET_ROOTPATH}/usr/lib/gcc/x86_64-redhat-linux/14"
+          RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
 
       - name: Install built wheel and test
         run: |
