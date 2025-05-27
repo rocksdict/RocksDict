@@ -15,10 +15,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Install llvm-19
+      - name: Install llvm-20
         run: |
           brew update
-          brew install llvm@19
+          brew install llvm@20
           brew install lld
       - uses: actions/setup-python@v5
         with:
@@ -27,7 +27,7 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.86.0
+          toolchain: 1.87.0
           default: true
       - name: Build wheels
         run: |
@@ -35,10 +35,10 @@ jobs:
           pip install maturin
           eval "$(brew shellenv)"
           export MACOSX_DEPLOYMENT_TARGET=10.14
-          export LIBCLANG_PATH=${HOMEBREW_PREFIX}/opt/llvm@19/lib
-          export CC=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang
-          export CXX=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang++
-          export AR=${HOMEBREW_PREFIX}/opt/llvm@19/bin/llvm-ar
+          export LIBCLANG_PATH=${HOMEBREW_PREFIX}/opt/llvm@20/lib
+          export CC=${HOMEBREW_PREFIX}/opt/llvm@20/bin/clang
+          export CXX=${HOMEBREW_PREFIX}/opt/llvm@20/bin/clang++
+          export AR=${HOMEBREW_PREFIX}/opt/llvm@20/bin/llvm-ar
           export CFLAGS="-flto=thin -O3 -isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
           export CXXFLAGS="-flto=thin -O3 -isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
           export LLD=${HOMEBREW_PREFIX}/opt/lld/bin/ld64.lld
@@ -69,10 +69,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Install llvm-19
+      - name: Install llvm-20
         run: |
           brew update
-          brew install llvm@19
+          brew install llvm@20
           brew install lld
       - uses: actions/setup-python@v5
         with:
@@ -81,7 +81,7 @@ jobs:
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.86.0
+          toolchain: 1.87.0
           default: true
       - name: Build wheels
         run: |
@@ -89,10 +89,10 @@ jobs:
           pip install maturin
           eval "$(brew shellenv)"
           export MACOSX_DEPLOYMENT_TARGET=10.14
-          export LIBCLANG_PATH=${HOMEBREW_PREFIX}/opt/llvm@19/lib
-          export CC=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang
-          export CXX=${HOMEBREW_PREFIX}/opt/llvm@19/bin/clang++
-          export AR=${HOMEBREW_PREFIX}/opt/llvm@19/bin/llvm-ar
+          export LIBCLANG_PATH=${HOMEBREW_PREFIX}/opt/llvm@20/lib
+          export CC=${HOMEBREW_PREFIX}/opt/llvm@20/bin/clang
+          export CXX=${HOMEBREW_PREFIX}/opt/llvm@20/bin/clang++
+          export AR=${HOMEBREW_PREFIX}/opt/llvm@20/bin/llvm-ar
           export CFLAGS="-flto=thin -O3 -isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
           export CXXFLAGS="-flto=thin -O3 -isysroot/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
           export LLD=${HOMEBREW_PREFIX}/opt/lld/bin/ld64.lld
@@ -129,14 +129,14 @@ jobs:
           python-version: ${{ matrix.py_version }}
           architecture: ${{ matrix.target }}
       - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v2.0.6
+        uses: KyleMayes/install-llvm-action@v2.0.7
         with:
-          version: 19.1
-          directory: ${{ runner.temp }}/llvm-19.1
+          version: 20.1.4
+          directory: ${{ runner.temp }}/llvm-20.1.4
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.86.0
+          toolchain: 1.87.0
           default: true
       - name: Build wheels
         uses: messense/maturin-action@v1
@@ -144,10 +144,10 @@ jobs:
           target: ${{ matrix.target }}
           args: --release --out dist --no-default-features --features bindgen-runtime
         env:
-          LIBCLANG_PATH: ${{ runner.temp }}/llvm-19.1/lib
-          CC: ${{ runner.temp }}/llvm-19.1/bin/clang-cl
-          CXX: ${{ runner.temp }}/llvm-19.1/bin/clang-cl
-          AR: ${{ runner.temp }}/llvm-19.1/bin/llvm-lib
+          LIBCLANG_PATH: ${{ runner.temp }}/llvm-20.1.4/lib
+          CC: ${{ runner.temp }}/llvm-20.1.4/bin/clang-cl
+          CXX: ${{ runner.temp }}/llvm-20.1.4/bin/clang-cl
+          AR: ${{ runner.temp }}/llvm-20.1.4/bin/llvm-lib
           CFLAGS: "/clang:-flto=thin /clang:-O3 /clang:-fuse-ld=lld-link"
           CXXFLAGS: "/clang:-flto=thin /clang:-O3 /clang:-fuse-ld=lld-link"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=lld-link"
@@ -179,12 +179,12 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.86.0
+          rust-toolchain: 1.87.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: 2_28
           args: --release --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
-          container: congyuwang/manylinux_2_28_x86_64:llvm-19.1.3
+          container: congyuwang/manylinux_2_28_x86_64:llvm-20.1.5
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
@@ -192,7 +192,7 @@ jobs:
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3"
           CXXFLAGS: "-flto=thin -O3"
-          RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
+          RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-L/opt/rh/gcc-toolset-14/root/usr/lib/gcc/x86_64-redhat-linux/14/ -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
 
       - name: Install built wheel and test
         run: |
@@ -222,12 +222,12 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.86.0
+          rust-toolchain: 1.87.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: 2014
           args: --release --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
-          container: congyuwang/manylinux2014_x86_64:llvm-19.1.3
+          container: congyuwang/manylinux2014_x86_64:llvm-20.1.5
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
@@ -264,12 +264,12 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.86.0
+          rust-toolchain: 1.87.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: 2_28
           args: --release --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
-          container: congyuwang/manylinux_2_28_aarch64:llvm-19.1.3
+          container: congyuwang/manylinux_2_28_aarch64:llvm-20.1.5
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
@@ -306,12 +306,12 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.86.0
+          rust-toolchain: 1.87.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: 2014
           args: --release --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
-          container: congyuwang/manylinux2014_aarch64:llvm-19.1.3
+          container: congyuwang/manylinux2014_aarch64:llvm-20.1.5
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
@@ -344,32 +344,32 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.86.0
+          rust-toolchain: 1.87.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
           args: --release --no-default-features --features bindgen-static,lto --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
-          container: congyuwang/musllinux_1_2_x86_64:llvm-19.1.3
+          container: congyuwang/musllinux_1_2_x86_64:llvm-20.1.5
           before-script-linux: |
             apk update
             apk add ncurses-static
             apk add zlib-static
-            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/crtbeginS.o /usr/lib/crtbeginS.o
-            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/crtendS.o /usr/lib/crtendS.o
-            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/13.2.1/libgcc.a /usr/lib/libgcc.a
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o
+            ln -s /usr/lib/gcc/x86_64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3 -isystem/usr/include"
-          CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/13.2.1/ -isystem/usr/include -isystem/usr/include/c++/13.2.1/x86_64-alpine-linux-musl"
+          CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/14.2.0/ -isystem/usr/include -isystem/usr/include/c++/14.2.0/x86_64-alpine-linux-musl"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
           LLVM_CONFIG_PATH: /root/llvm_config.sh
           LIBCLANG_STATIC_PATH: /usr/local/lib
       - name: Run Tests
         run: |
-          docker run --rm -v ${{ github.workspace }}/dist:/dist:ro -v ${{ github.workspace }}/test:/test:ro congyuwang/musllinux_1_2_x86_64:llvm-19.1.3 bash -c "
+          docker run --rm -v ${{ github.workspace }}/dist:/dist:ro -v ${{ github.workspace }}/test:/test:ro congyuwang/musllinux_1_2_x86_64:llvm-20.1.5 bash -c "
             python3.12 -m pip install rocksdict --no-index --find-links /dist --force-reinstall || true
             python3.12 -m pip install speedict --no-index --find-links /dist --force-reinstall || true
             python3.12 -m unittest discover -v /test"
@@ -392,32 +392,32 @@ jobs:
       - name: Build Wheels
         uses: messense/maturin-action@v1
         with:
-          rust-toolchain: 1.86.0
+          rust-toolchain: 1.87.0
           rustup-components: rustfmt
           target: ${{ matrix.target }}
           manylinux: musllinux_1_2
           args: --release --no-default-features --features bindgen-static,lto --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13 pypy3.9 pypy3.10'
-          container: congyuwang/musllinux_1_2_aarch64:llvm-19.1.3
+          container: congyuwang/musllinux_1_2_aarch64:llvm-20.1.5
           before-script-linux: |
             apk update
             apk add ncurses-static
             apk add zlib-static
-            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/crtbeginS.o /usr/lib/crtbeginS.o
-            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/crtendS.o /usr/lib/crtendS.o
-            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/13.2.1/libgcc.a /usr/lib/libgcc.a
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/14.2.0/crtbeginS.o /usr/lib/crtbeginS.o
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/14.2.0/crtendS.o /usr/lib/crtendS.o
+            ln -s /usr/lib/gcc/aarch64-alpine-linux-musl/14.2.0/libgcc.a /usr/lib/libgcc.a
         env:
           LIBCLANG_PATH: /usr/local/lib
           CC: /usr/local/bin/clang
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
           CFLAGS: "-flto=thin -O3 -isystem/usr/include"
-          CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/13.2.1/ -isystem/usr/include -isystem/usr/include/c++/13.2.1/aarch64-alpine-linux-musl"
+          CXXFLAGS: "-flto=thin -O3 -isystem/usr/include/c++/14.2.0/ -isystem/usr/include -isystem/usr/include/c++/14.2.0/aarch64-alpine-linux-musl"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
           LLVM_CONFIG_PATH: /root/llvm_config.sh
           LIBCLANG_STATIC_PATH: /usr/local/lib
       - name: Run Tests
         run: |
-          docker run --rm -v ${{ github.workspace }}/dist:/dist:ro -v ${{ github.workspace }}/test:/test:ro congyuwang/musllinux_1_2_aarch64:llvm-19.1.3 bash -c "
+          docker run --rm -v ${{ github.workspace }}/dist:/dist:ro -v ${{ github.workspace }}/test:/test:ro congyuwang/musllinux_1_2_aarch64:llvm-20.1.5 bash -c "
             python3.12 -m pip install rocksdict --no-index --find-links /dist --force-reinstall || true
             python3.12 -m pip install speedict --no-index --find-links /dist --force-reinstall || true
             python3.12 -m unittest discover -v /test"
@@ -441,6 +441,8 @@ jobs:
         musllinux_1_2_x86_64,
         musllinux_1_2_arm64,
       ]
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -457,3 +459,10 @@ jobs:
         run: |
           pip install --upgrade twine
           twine upload --skip-existing dist/*
+      - name: Github Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: dist/*

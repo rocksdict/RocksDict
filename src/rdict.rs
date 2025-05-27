@@ -395,17 +395,7 @@ impl Rdict {
             Some(cf) => cf.clone(),
         };
         if let Ok(keys) = key.downcast() {
-            return Ok(get_batch_inner(
-                db,
-                keys,
-                default,
-                py,
-                read_opt,
-                &self.loads,
-                &cf,
-                self.opt_py.raw_mode,
-            )?
-            .into_any());
+            return Ok(self.get_batch_inner(db, keys, default, py, &cf)?.into_any());
         }
         let key_bytes = encode_key(key, self.opt_py.raw_mode)?;
         let value_result = db
@@ -1378,39 +1368,45 @@ fn display_live_file_dict<'py>(
     Ok(result.into_any())
 }
 
-fn get_batch_inner<'a>(
-    db: &DB,
-    key_list: &Bound<PyList>,
-    default: Option<Bound<'a, PyAny>>,
-    py: Python<'a>,
-    read_opt: &ReadOptions,
-    loads: &PyObject,
-    cf: &Arc<UnboundColumnFamily>,
-    raw_mode: bool,
-) -> PyResult<Bound<'a, PyList>> {
-    let keys_py = key_list.iter().collect::<Vec<_>>();
-    let mut keys: Vec<Cow<[u8]>> = Vec::with_capacity(key_list.len());
-    for key in keys_py.iter() {
-        keys.push(encode_key(key, raw_mode)?);
-    }
-    let values = py.allow_threads(|| db.batched_multi_get_cf_opt(cf, &keys, false, read_opt));
-    let result = PyList::empty(py);
-    for v in values {
-        match v {
-            Ok(value) => match value {
-                None => {
-                    if let Some(default) = &default {
-                        result.append(default)?;
-                    } else {
-                        result.append(py.None())?;
-                    }
-                }
-                Some(slice) => result.append(decode_value(py, slice.as_ref(), loads, raw_mode)?)?,
-            },
-            Err(e) => return Err(PyException::new_err(e.to_string())),
+impl Rdict {
+    fn get_batch_inner<'py>(
+        &self,
+        db: &DB,
+        key_list: &Bound<PyList>,
+        default: Option<Bound<'py, PyAny>>,
+        py: Python<'py>,
+        cf: &Arc<UnboundColumnFamily>,
+    ) -> PyResult<Bound<'py, PyList>> {
+        let keys_py = key_list.iter().collect::<Vec<_>>();
+        let mut keys: Vec<Cow<[u8]>> = Vec::with_capacity(key_list.len());
+        for key in keys_py.iter() {
+            keys.push(encode_key(key, self.opt_py.raw_mode)?);
         }
+        let values =
+            py.allow_threads(|| db.batched_multi_get_cf_opt(cf, &keys, false, &self.read_opt));
+        let result = PyList::empty(py);
+        for v in values {
+            match v {
+                Ok(value) => match value {
+                    None => {
+                        if let Some(default) = &default {
+                            result.append(default)?;
+                        } else {
+                            result.append(py.None())?;
+                        }
+                    }
+                    Some(slice) => result.append(decode_value(
+                        py,
+                        slice.as_ref(),
+                        &self.loads,
+                        self.opt_py.raw_mode,
+                    )?)?,
+                },
+                Err(e) => return Err(PyException::new_err(e.to_string())),
+            }
+        }
+        Ok(result)
     }
-    Ok(result)
 }
 
 impl Drop for Rdict {
