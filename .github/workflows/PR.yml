@@ -235,6 +235,7 @@ jobs:
           CC: /usr/local/bin/clang
           CXX: /usr/local/bin/clang++
           AR: /usr/local/bin/llvm-ar
+          LIBRARY_PATH: /opt/rh/gcc-toolset-14/root/usr/lib/gcc/x86_64-redhat-linux/14/
           CFLAGS: "-flto=thin -O3"
           CXXFLAGS: "-flto=thin -O3"
           RUSTFLAGS: "-Clinker-plugin-lto -Clinker=/usr/local/bin/clang -Clink-arg=-fuse-ld=/usr/local/bin/ld.lld"
