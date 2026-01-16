@@ -234,7 +234,15 @@ impl Rdict {
             raw_mode: options.raw_mode,
             prefix_extractors: prefix_extractors.clone(),
         };
-        rocksdict_config.save(config_path)?;
+        // if access type is read only, do not save rocksdict config
+        match &access_type.0 {
+            AccessTypeInner::ReadWrite | AccessTypeInner::WithTTL { .. } => {
+                rocksdict_config.save(config_path)?;
+            }
+            _ => {
+                // Skip saving config for ReadOnly and Secondary modes
+            }
+        }
         let opt_inner = &options.inner_opt;
         // define column families
         let cfs = match column_families {
