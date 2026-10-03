@@ -755,10 +755,9 @@ impl Rdict {
         RdictIter::new(
             &self.db,
             &self.column_family,
-            read_opt,
+            read_opt.to_read_opt(self.opt_py.raw_mode, py)?,
             &self.loads,
             self.opt_py.raw_mode,
-            py,
         )
     }
 

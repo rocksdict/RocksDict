@@ -67,10 +67,9 @@ impl Snapshot {
         RdictIter::new(
             &self.db,
             &self.column_family,
-            read_opt,
+            opt_pointer,
             &self.pickle_loads,
             self.raw_mode,
-            py,
         )
     }
 

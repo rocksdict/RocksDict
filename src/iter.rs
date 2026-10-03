@@ -2,7 +2,7 @@ use crate::db_reference::DbReferenceHolder;
 use crate::encoder::{decode_value, encode_key};
 use crate::exceptions::DbClosedError;
 use crate::util::error_message;
-use crate::{ReadOpt, ReadOptionsPy};
+use crate::ReadOpt;
 use core::slice;
 use libc::{c_char, c_uchar, size_t};
 use pyo3::exceptions::PyException;
@@ -66,13 +66,10 @@ impl RdictIter {
     pub(crate) fn new(
         db: &DbReferenceHolder,
         cf: &Option<Arc<UnboundColumnFamily>>,
-        readopts: ReadOptionsPy,
+        readopts: ReadOpt,
         pickle_loads: &Py<PyAny>,
         raw_mode: bool,
-        py: Python,
     ) -> PyResult<Self> {
-        let readopts = readopts.to_read_opt(raw_mode, py)?;
-
         let db_inner = db
             .get()
             .ok_or_else(|| DbClosedError::new_err("DB instance already closed"))?
