@@ -339,7 +339,9 @@ impl Drop for RdictIter {
     }
 }
 
+// SAFETY: concurrent const Iterator calls are safe (iterator.h); the other methods take `&mut self`.
 unsafe impl Send for RdictIter {}
+unsafe impl Sync for RdictIter {}
 
 macro_rules! impl_iter_single {
     ($iter_name: ident, $field: ident) => {
@@ -446,5 +448,3 @@ impl_iter_single!(RdictValues, value);
 impl_iter_single!(RdictColumns, columns);
 impl_iter!(RdictItems, key, value);
 impl_iter!(RdictEntities, key, columns);
-
-unsafe impl Sync for RdictIter {}

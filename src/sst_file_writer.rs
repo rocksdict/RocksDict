@@ -22,6 +22,7 @@ pub struct SstFileWriterPy {
     raw_mode: bool,
 }
 
+// SAFETY: SstFileWriter is not thread-safe (sst_file_writer.h); every method using it takes `&mut self`.
 unsafe impl Send for SstFileWriterPy {}
 unsafe impl Sync for SstFileWriterPy {}
 
@@ -74,7 +75,7 @@ impl SstFileWriterPy {
     }
 
     /// Prepare SstFileWriter to write into file located at "file_path".
-    fn open(&self, path: &str) -> PyResult<()> {
+    fn open(&mut self, path: &str) -> PyResult<()> {
         let cpath = to_cpath(path)?;
         self.open_raw(&cpath)
     }
@@ -85,7 +86,7 @@ impl SstFileWriterPy {
     }
 
     /// returns the current file size
-    fn file_size(&self) -> u64 {
+    fn file_size(&mut self) -> u64 {
         self.file_size_raw()
     }
 
@@ -115,7 +116,7 @@ impl SstFileWriterPy {
     }
 
     #[inline]
-    fn open_raw(&self, cpath: &CString) -> PyResult<()> {
+    fn open_raw(&mut self, cpath: &CString) -> PyResult<()> {
         unsafe {
             ffi_try!(librocksdb_sys::rocksdb_sstfilewriter_open(
                 self.inner,
@@ -135,7 +136,7 @@ impl SstFileWriterPy {
     }
 
     #[inline]
-    fn file_size_raw(&self) -> u64 {
+    fn file_size_raw(&mut self) -> u64 {
         let mut file_size: u64 = 0;
         unsafe { librocksdb_sys::rocksdb_sstfilewriter_file_size(self.inner, &mut file_size) };
         file_size

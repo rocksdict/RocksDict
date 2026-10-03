@@ -508,9 +508,6 @@ pub(crate) struct BottommostLevelCompactionPy(BottommostLevelCompaction);
 #[pyclass(name = "CompactOptions")]
 pub(crate) struct CompactOptionsPy(pub(crate) CompactOptions);
 
-unsafe impl Send for CompactOptionsPy {}
-unsafe impl Sync for CompactOptionsPy {}
-
 impl OptionsPy {
     /// function that sets prefix extractor according to slice transform type
     fn set_prefix_extractor_inner(
@@ -2358,8 +2355,8 @@ impl ReadOptionsPy {
     }
 }
 
+// SAFETY: a ReadOpt is written only before it is shared; afterwards RocksDB only reads it.
 unsafe impl Send for ReadOpt {}
-
 unsafe impl Sync for ReadOpt {}
 
 impl Drop for ReadOpt {

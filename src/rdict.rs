@@ -160,10 +160,6 @@ impl Rdict {
         }
     }
 
-    fn dump_config(&self) -> PyResult<()> {
-        self.config().save_to_dir(&self.path()?)
-    }
-
     #[inline]
     pub(crate) fn get_db(&self) -> PyResult<&DbReference> {
         self.db
@@ -936,14 +932,17 @@ impl Rdict {
                 self.opt_py.raw_mode
             )));
         }
-        // write slice_transform info into config file
+        // write slice_transform info into config file, holding the lock so concurrent calls take turns
+        let mut slice_transforms = self.slice_transforms.write().unwrap();
         if let Some(slice_transform) = options.prefix_extractor {
-            self.slice_transforms
-                .write()
-                .unwrap()
-                .insert(name.to_string(), slice_transform);
+            slice_transforms.insert(name.to_string(), slice_transform);
         }
-        self.dump_config()?;
+        RocksDictConfig {
+            raw_mode: self.opt_py.raw_mode,
+            prefix_extractors: slice_transforms.clone(),
+        }
+        .save_to_dir(&self.path()?)?;
+        drop(slice_transforms);
         db.create_cf(name, &options.inner_opt)
             .map_err(|e| PyException::new_err(e.to_string()))?;
         self.get_column_family(name, py)
@@ -1067,7 +1066,7 @@ impl Rdict {
         py: Python,
     ) -> PyResult<()> {
         let db = self.get_db()?;
-        let opts = &opts.borrow(py).0;
+        let opts = &opts.try_borrow(py)?.0;
         if let Some(cf) = &self.column_family {
             db.ingest_external_file_cf_opts(cf, opts, paths)
         } else {
@@ -1225,7 +1224,7 @@ impl Rdict {
         py: Python,
     ) -> PyResult<()> {
         let db = self.get_db()?;
-        let opt = compact_opt.borrow(py);
+        let opt = compact_opt.try_borrow(py)?;
         let opt_ref = opt.deref();
         let from = if begin.is_none() {
             None
@@ -1431,8 +1430,6 @@ impl Drop for Rdict {
     }
 }
 
-unsafe impl Send for Rdict {}
-
 /// Column family handle. This can be used in WriteBatch to specify Column Family.
 #[pyclass(name = "ColumnFamily", from_py_object)]
 #[allow(dead_code)]
@@ -1443,8 +1440,6 @@ pub(crate) struct ColumnFamilyPy {
     // must keep db alive
     db: DbReferenceHolder,
 }
-
-unsafe impl Send for ColumnFamilyPy {}
 
 #[pymethods]
 impl AccessType {

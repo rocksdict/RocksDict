@@ -266,4 +266,5 @@ impl WriteBatchPy {
     }
 }
 
+// SAFETY: changes take `&mut self`; the rest call const WriteBatch methods, safe concurrently (write_batch.h).
 unsafe impl Sync for WriteBatchPy {}
