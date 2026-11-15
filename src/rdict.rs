@@ -106,7 +106,7 @@ pub(crate) struct Rdict {
 ///         db = Rdict("./main_path", access_type = AccessType.secondary("./secondary_path"))
 ///
 #[derive(Clone)]
-#[pyclass(name = "AccessType")]
+#[pyclass(name = "AccessType", from_py_object)]
 pub(crate) struct AccessType(AccessTypeInner);
 
 #[derive(Serialize, Deserialize)]
@@ -1434,7 +1434,7 @@ impl Drop for Rdict {
 unsafe impl Send for Rdict {}
 
 /// Column family handle. This can be used in WriteBatch to specify Column Family.
-#[pyclass(name = "ColumnFamily")]
+#[pyclass(name = "ColumnFamily", from_py_object)]
 #[allow(dead_code)]
 #[derive(Clone)]
 pub(crate) struct ColumnFamilyPy {

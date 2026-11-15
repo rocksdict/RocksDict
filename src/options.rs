@@ -49,7 +49,7 @@ use std::path::{Path, PathBuf};
 ///         it will only allow bytes as key-value pairs, and is compatible
 ///         with other RockDB database).
 ///
-#[pyclass(name = "Options")]
+#[pyclass(name = "Options", from_py_object)]
 #[derive(Clone)]
 pub(crate) struct OptionsPy {
     pub(crate) inner_opt: Options,
@@ -209,7 +209,7 @@ pub(crate) struct CuckooTableOptionsPy(CuckooTableOptions);
 
 /// Used in `PlainTableFactoryOptions`.
 #[derive(Clone)]
-#[pyclass(name = "KeyEncodingType")]
+#[pyclass(name = "KeyEncodingType", from_py_object)]
 pub(crate) struct KeyEncodingTypePy(KeyEncodingType);
 
 #[pymethods]
@@ -265,7 +265,7 @@ pub(crate) struct PlainTableFactoryOptionsPy {
     store_index_in_file: bool,
 }
 
-#[pyclass(name = "Cache")]
+#[pyclass(name = "Cache", from_py_object)]
 #[derive(Clone)]
 pub(crate) struct CachePy(Cache);
 
@@ -377,7 +377,7 @@ pub(crate) struct WriteBufferManagerPy(WriteBufferManager);
 /// - XXHash64
 /// - XXH3
 ///
-#[pyclass(name = "ChecksumType")]
+#[pyclass(name = "ChecksumType", from_py_object)]
 pub(crate) struct ChecksumTypePy(ChecksumType);
 
 impl Clone for ChecksumTypePy {
@@ -412,7 +412,7 @@ impl Clone for ChecksumTypePy {
 #[pyclass(name = "DBRecoveryMode")]
 pub(crate) struct DBRecoveryModePy(DBRecoveryMode);
 
-#[pyclass(name = "Env")]
+#[pyclass(name = "Env", from_py_object)]
 #[derive(Clone)]
 pub(crate) struct EnvPy(Env);
 
@@ -482,7 +482,7 @@ pub(crate) struct UniversalCompactOptionsPy {
     stop_style: UniversalCompactionStopStylePy,
 }
 
-#[pyclass(name = "UniversalCompactionStopStyle")]
+#[pyclass(name = "UniversalCompactionStopStyle", from_py_object)]
 #[derive(Copy, Clone)]
 pub(crate) struct UniversalCompactionStopStylePy(UniversalCompactionStopStyle);
 
@@ -501,7 +501,7 @@ pub(crate) struct FifoCompactOptionsPy {
 #[pyclass(name = "IngestExternalFileOptions")]
 pub(crate) struct IngestExternalFileOptionsPy(pub(crate) IngestExternalFileOptions);
 
-#[pyclass(name = "BottommostLevelCompaction")]
+#[pyclass(name = "BottommostLevelCompaction", from_py_object)]
 #[derive(Clone)]
 pub(crate) struct BottommostLevelCompactionPy(BottommostLevelCompaction);
 
