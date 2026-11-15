@@ -27,6 +27,12 @@ def randbytes(n):
     return getrandbits(n * 8).to_bytes(n, "little")
 
 
+def collect():
+    # PyPy may free a native object only on a second collection
+    gc.collect()
+    gc.collect()
+
+
 def compare_dicts(test_case: unittest.TestCase, ref_dict: dict, test_dict: Rdict):
     # assert that the values are the same
     test_case.assertEqual({k: v for k, v in test_dict.items()}, ref_dict)
@@ -1439,16 +1445,16 @@ class TestSnapshot(unittest.TestCase):
         del self.test_dict["outlive"]
         it = snapshot.items()
         del snapshot
-        gc.collect()
+        collect()
         self.assertIn(("outlive", 1), list(it))
 
     def test_iter_keeps_snapshot(self):
         assert self.test_dict is not None
         it = self.test_dict.snapshot().iter()
-        gc.collect()
+        collect()
         self.assertEqual(self.test_dict.property_int_value("rocksdb.num-snapshots"), 1)
         del it
-        gc.collect()
+        collect()
         self.assertEqual(self.test_dict.property_int_value("rocksdb.num-snapshots"), 0)
 
     def test_iter_rejects_tailing(self):
@@ -1466,7 +1472,7 @@ class TestSnapshot(unittest.TestCase):
     def tearDownClass(cls):
         assert cls.test_dict is not None
         cls.test_dict.close()
-        gc.collect()
+        collect()
         Rdict.destroy(cls.path)
 
 
