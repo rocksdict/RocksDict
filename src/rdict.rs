@@ -106,7 +106,7 @@ pub(crate) struct Rdict {
 ///         db = Rdict("./main_path", access_type = AccessType.secondary("./secondary_path"))
 ///
 #[derive(Clone)]
-#[pyclass(name = "AccessType")]
+#[pyclass(name = "AccessType", from_py_object)]
 pub(crate) struct AccessType(AccessTypeInner);
 
 #[derive(Serialize, Deserialize)]
@@ -158,10 +158,6 @@ impl Rdict {
             raw_mode: self.opt_py.raw_mode,
             prefix_extractors: self.slice_transforms.read().unwrap().clone(),
         }
-    }
-
-    fn dump_config(&self) -> PyResult<()> {
-        self.config().save_to_dir(&self.path()?)
     }
 
     #[inline]
@@ -936,16 +932,21 @@ impl Rdict {
                 self.opt_py.raw_mode
             )));
         }
-        // write slice_transform info into config file
-        if let Some(slice_transform) = options.prefix_extractor {
-            self.slice_transforms
-                .write()
-                .unwrap()
-                .insert(name.to_string(), slice_transform);
-        }
-        self.dump_config()?;
+        // Hold the lock while creating the column family and saving its slice_transform
+        // to the config file, so that concurrent calls cannot save a config that differs
+        // from the column family created. A failed creation saves nothing.
+        let mut slice_transforms = self.slice_transforms.write().unwrap();
         db.create_cf(name, &options.inner_opt)
             .map_err(|e| PyException::new_err(e.to_string()))?;
+        if let Some(slice_transform) = options.prefix_extractor {
+            slice_transforms.insert(name.to_string(), slice_transform);
+        }
+        RocksDictConfig {
+            raw_mode: self.opt_py.raw_mode,
+            prefix_extractors: slice_transforms.clone(),
+        }
+        .save_to_dir(&self.path()?)?;
+        drop(slice_transforms);
         self.get_column_family(name, py)
     }
 
@@ -1067,7 +1068,7 @@ impl Rdict {
         py: Python,
     ) -> PyResult<()> {
         let db = self.get_db()?;
-        let opts = &opts.borrow(py).0;
+        let opts = &opts.try_borrow(py)?.0;
         if let Some(cf) = &self.column_family {
             db.ingest_external_file_cf_opts(cf, opts, paths)
         } else {
@@ -1225,7 +1226,7 @@ impl Rdict {
         py: Python,
     ) -> PyResult<()> {
         let db = self.get_db()?;
-        let opt = compact_opt.borrow(py);
+        let opt = compact_opt.try_borrow(py)?;
         let opt_ref = opt.deref();
         let from = if begin.is_none() {
             None
@@ -1431,10 +1432,8 @@ impl Drop for Rdict {
     }
 }
 
-unsafe impl Send for Rdict {}
-
 /// Column family handle. This can be used in WriteBatch to specify Column Family.
-#[pyclass(name = "ColumnFamily")]
+#[pyclass(name = "ColumnFamily", from_py_object)]
 #[allow(dead_code)]
 #[derive(Clone)]
 pub(crate) struct ColumnFamilyPy {
@@ -1443,8 +1442,6 @@ pub(crate) struct ColumnFamilyPy {
     // must keep db alive
     db: DbReferenceHolder,
 }
-
-unsafe impl Send for ColumnFamilyPy {}
 
 #[pymethods]
 impl AccessType {

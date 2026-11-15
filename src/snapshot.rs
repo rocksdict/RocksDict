@@ -189,8 +189,7 @@ impl Drop for Snapshot {
     }
 }
 
-/// `Send` and `Sync` implementations for `SnapshotWithThreadMode` are safe, because `SnapshotWithThreadMode` is
-/// immutable and can be safely shared between threads.
+// SAFETY: a RocksDB Snapshot is immutable and safe to access from multiple threads (snapshot.h).
 unsafe impl Send for Snapshot {}
 unsafe impl Sync for Snapshot {}
 

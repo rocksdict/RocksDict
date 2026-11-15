@@ -107,7 +107,8 @@ use pyo3::prelude::*;
 /// - value: `int, float, bool, str, bytes` and anything that
 ///     supports `pickle`.
 ///
-#[pymodule]
+// Runs without the GIL: each `unsafe impl Send/Sync` in src/ states why it is thread-safe.
+#[pymodule(gil_used = false)]
 fn rocksdict(py: Python, m: &Bound<PyModule>) -> PyResult<()> {
     m.add_class::<Rdict>()?;
     m.add_class::<OptionsPy>()?;

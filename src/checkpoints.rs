@@ -79,5 +79,6 @@ impl Drop for CheckpointPy {
     }
 }
 
+// SAFETY: a Checkpoint holds only its DB pointer, and a DB is safe for concurrent access (db.h).
 unsafe impl Send for CheckpointPy {}
 unsafe impl Sync for CheckpointPy {}
