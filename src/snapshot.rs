@@ -93,7 +93,8 @@ impl Snapshot {
     ///     from_key: iterate from key, first seek to this key
     ///         or the nearest next key for iteration
     ///         (depending on iteration direction).
-    ///     read_opt: ReadOptions, must have the same `raw_mode` argument.
+    ///     read_opt: ReadOptions, must have the same `raw_mode` argument,
+    ///         and must not be tailing.
     #[pyo3(signature = (backwards = false, from_key = None, read_opt = None))]
     fn items(
         slf: &Bound<'_, Self>,
@@ -112,7 +113,8 @@ impl Snapshot {
     ///     from_key: iterate from key, first seek to this key
     ///         or the nearest next key for iteration
     ///         (depending on iteration direction).
-    ///     read_opt: ReadOptions, must have the same `raw_mode` argument.
+    ///     read_opt: ReadOptions, must have the same `raw_mode` argument,
+    ///         and must not be tailing.
     #[pyo3(signature = (backwards = false, from_key = None, read_opt = None))]
     fn keys(
         slf: &Bound<'_, Self>,
@@ -131,7 +133,8 @@ impl Snapshot {
     ///     from_key: iterate from key, first seek to this key
     ///         or the nearest next key for iteration
     ///         (depending on iteration direction).
-    ///     read_opt: ReadOptions, must have the same `raw_mode` argument.
+    ///     read_opt: ReadOptions, must have the same `raw_mode` argument,
+    ///         and must not be tailing.
     #[pyo3(signature = (backwards = false, from_key = None, read_opt = None))]
     fn values(
         slf: &Bound<'_, Self>,
