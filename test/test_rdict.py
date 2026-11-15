@@ -1432,6 +1432,16 @@ class TestSnapshot(unittest.TestCase):
 
         self.assertEqual(list(self.test_dict.items()), [(i, -i) for i in range(5, 10)])
 
+    def test_items_outlive_snapshot(self):
+        assert self.test_dict is not None
+        self.test_dict["outlive"] = 1
+        snapshot = self.test_dict.snapshot()
+        del self.test_dict["outlive"]
+        it = snapshot.items()
+        del snapshot
+        gc.collect()
+        self.assertIn(("outlive", 1), list(it))
+
     def test_iter_keeps_snapshot(self):
         assert self.test_dict is not None
         it = self.test_dict.snapshot().iter()
