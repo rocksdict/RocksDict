@@ -2,7 +2,7 @@ use crate::db_reference::{DbReference, DbReferenceHolder};
 use crate::encoder::{decode_value, encode_key};
 use crate::exceptions::DbClosedError;
 use crate::{Rdict, RdictItems, RdictIter, RdictKeys, RdictValues, ReadOptionsPy};
-use pyo3::exceptions::PyException;
+use pyo3::exceptions::{PyException, PyValueError};
 use pyo3::prelude::*;
 use rocksdb::{ReadOptions, UnboundColumnFamily};
 use std::sync::Arc;
@@ -53,24 +53,36 @@ impl Snapshot {
     /// the default read options.
     ///
     /// Args:
-    ///     read_opt: ReadOptions, must have the same `raw_mode` argument.
+    ///     read_opt: ReadOptions, must have the same `raw_mode` argument,
+    ///         and must not be tailing.
     #[pyo3(signature = (read_opt = None))]
-    fn iter(&self, read_opt: Option<&ReadOptionsPy>, py: Python) -> PyResult<RdictIter> {
+    fn iter(
+        slf: &Bound<'_, Self>,
+        read_opt: Option<&ReadOptionsPy>,
+        py: Python,
+    ) -> PyResult<RdictIter> {
         let read_opt: ReadOptionsPy = match read_opt {
             None => ReadOptionsPy::default(py)?,
             Some(opt) => opt.clone(),
         };
-        let opt_pointer = read_opt.to_read_opt(self.raw_mode, py)?;
+        // A tailing iterator reads the live database, not the snapshot.
+        if read_opt.tailing {
+            return Err(PyValueError::new_err(
+                "a Snapshot iterator cannot be tailing",
+            ));
+        }
+        let snapshot = slf.borrow();
+        let opt_pointer = read_opt.to_read_opt(snapshot.raw_mode, py)?;
         unsafe {
-            set_snapshot(opt_pointer.0, self.inner);
+            set_snapshot(opt_pointer.0, snapshot.inner);
         }
         RdictIter::new(
-            &self.db,
-            &self.column_family,
-            read_opt,
-            &self.pickle_loads,
-            self.raw_mode,
-            py,
+            &snapshot.db,
+            &snapshot.column_family,
+            opt_pointer,
+            &snapshot.pickle_loads,
+            snapshot.raw_mode,
+            Some(slf.clone().unbind()),
         )
     }
 
@@ -81,16 +93,17 @@ impl Snapshot {
     ///     from_key: iterate from key, first seek to this key
     ///         or the nearest next key for iteration
     ///         (depending on iteration direction).
-    ///     read_opt: ReadOptions, must have the same `raw_mode` argument.
+    ///     read_opt: ReadOptions, must have the same `raw_mode` argument,
+    ///         and must not be tailing.
     #[pyo3(signature = (backwards = false, from_key = None, read_opt = None))]
     fn items(
-        &self,
+        slf: &Bound<'_, Self>,
         backwards: bool,
         from_key: Option<&Bound<PyAny>>,
         read_opt: Option<&ReadOptionsPy>,
         py: Python,
     ) -> PyResult<RdictItems> {
-        RdictItems::new(self.iter(read_opt, py)?, backwards, from_key)
+        RdictItems::new(Self::iter(slf, read_opt, py)?, backwards, from_key)
     }
 
     /// Iterate through all keys.
@@ -100,16 +113,17 @@ impl Snapshot {
     ///     from_key: iterate from key, first seek to this key
     ///         or the nearest next key for iteration
     ///         (depending on iteration direction).
-    ///     read_opt: ReadOptions, must have the same `raw_mode` argument.
+    ///     read_opt: ReadOptions, must have the same `raw_mode` argument,
+    ///         and must not be tailing.
     #[pyo3(signature = (backwards = false, from_key = None, read_opt = None))]
     fn keys(
-        &self,
+        slf: &Bound<'_, Self>,
         backwards: bool,
         from_key: Option<&Bound<PyAny>>,
         read_opt: Option<&ReadOptionsPy>,
         py: Python,
     ) -> PyResult<RdictKeys> {
-        RdictKeys::new(self.iter(read_opt, py)?, backwards, from_key)
+        RdictKeys::new(Self::iter(slf, read_opt, py)?, backwards, from_key)
     }
 
     /// Iterate through all values.
@@ -119,16 +133,17 @@ impl Snapshot {
     ///     from_key: iterate from key, first seek to this key
     ///         or the nearest next key for iteration
     ///         (depending on iteration direction).
-    ///     read_opt: ReadOptions, must have the same `raw_mode` argument.
+    ///     read_opt: ReadOptions, must have the same `raw_mode` argument,
+    ///         and must not be tailing.
     #[pyo3(signature = (backwards = false, from_key = None, read_opt = None))]
     fn values(
-        &self,
+        slf: &Bound<'_, Self>,
         backwards: bool,
         from_key: Option<&Bound<PyAny>>,
         read_opt: Option<&ReadOptionsPy>,
         py: Python,
     ) -> PyResult<RdictValues> {
-        RdictValues::new(self.iter(read_opt, py)?, backwards, from_key)
+        RdictValues::new(Self::iter(slf, read_opt, py)?, backwards, from_key)
     }
 
     /// read from snapshot

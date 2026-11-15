@@ -1,8 +1,9 @@
 use crate::db_reference::DbReferenceHolder;
 use crate::encoder::{decode_value, encode_key};
 use crate::exceptions::DbClosedError;
+use crate::snapshot::Snapshot;
 use crate::util::error_message;
-use crate::{ReadOpt, ReadOptionsPy};
+use crate::ReadOpt;
 use core::slice;
 use libc::{c_char, c_uchar, size_t};
 use pyo3::exceptions::PyException;
@@ -25,6 +26,9 @@ pub(crate) struct RdictIter {
     /// inside `_readopts`. Storing this makes sure the upper bound is always alive when the
     /// iterator is being used.
     pub(crate) readopts: ReadOpt,
+
+    /// The snapshot that `readopts` points to, if any, kept alive as long as the iterator.
+    pub(crate) snapshot: Option<Py<Snapshot>>,
 
     /// use pickle loads to convert bytes to pyobjects
     pub(crate) loads: Py<PyAny>,
@@ -66,13 +70,11 @@ impl RdictIter {
     pub(crate) fn new(
         db: &DbReferenceHolder,
         cf: &Option<Arc<UnboundColumnFamily>>,
-        readopts: ReadOptionsPy,
+        readopts: ReadOpt,
         pickle_loads: &Py<PyAny>,
         raw_mode: bool,
-        py: Python,
+        snapshot: Option<Py<Snapshot>>,
     ) -> PyResult<Self> {
-        let readopts = readopts.to_read_opt(raw_mode, py)?;
-
         let db_inner = db
             .get()
             .ok_or_else(|| DbClosedError::new_err("DB instance already closed"))?
@@ -91,6 +93,7 @@ impl RdictIter {
             db: db.clone(),
             inner: Mutex::new(iter_inner),
             readopts,
+            snapshot,
             loads: pickle_loads.clone(),
             raw_mode,
         })

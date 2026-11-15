@@ -14,6 +14,7 @@ from rocksdict import (
     Options,
     PlainTableFactoryOptions,
     Rdict,
+    ReadOptions,
     SliceTransform,
     WriteBatch,
 )
@@ -24,6 +25,12 @@ TEST_INT_RANGE_UPPER = 999999
 def randbytes(n):
     """Generate n random bytes."""
     return getrandbits(n * 8).to_bytes(n, "little")
+
+
+def collect():
+    # PyPy may free a native object only on a second collection
+    gc.collect()
+    gc.collect()
 
 
 def compare_dicts(test_case: unittest.TestCase, ref_dict: dict, test_dict: Rdict):
@@ -1395,6 +1402,78 @@ class TestCheckpointRaw(unittest.TestCase):
         gc.collect()
         Rdict.destroy(cls.path, cls.opt)
         Rdict.destroy(cls.checkpoint_path, cls.opt)
+
+
+class TestSnapshot(unittest.TestCase):
+    test_dict = None
+    path = "./test_snapshot"
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.test_dict = Rdict(cls.path)
+
+    def test_iter_reads_snapshot(self):
+        assert self.test_dict is not None
+        for i in range(10):
+            self.test_dict[i] = i
+        snapshot = self.test_dict.snapshot()
+        for i in range(5):
+            del self.test_dict[i]
+        for i in range(5, 10):
+            self.test_dict[i] = -i
+
+        old = list(range(10))
+        self.assertEqual(list(snapshot.keys()), old)
+        self.assertEqual(list(snapshot.values()), old)
+        self.assertEqual(list(snapshot.items()), list(zip(old, old)))
+        self.assertEqual(list(snapshot.keys(backwards=True)), old[::-1])
+        it = snapshot.iter()
+        it.seek_to_first()
+        seen = []
+        while it.valid():
+            seen.append((it.key(), it.value()))
+            it.next()
+        self.assertEqual(seen, list(zip(old, old)))
+        del it, snapshot
+
+        self.assertEqual(list(self.test_dict.items()), [(i, -i) for i in range(5, 10)])
+
+    def test_items_outlive_snapshot(self):
+        assert self.test_dict is not None
+        self.test_dict["outlive"] = 1
+        snapshot = self.test_dict.snapshot()
+        del self.test_dict["outlive"]
+        it = snapshot.items()
+        del snapshot
+        collect()
+        self.assertIn(("outlive", 1), list(it))
+
+    def test_iter_keeps_snapshot(self):
+        assert self.test_dict is not None
+        it = self.test_dict.snapshot().iter()
+        collect()
+        self.assertEqual(self.test_dict.property_int_value("rocksdb.num-snapshots"), 1)
+        del it
+        collect()
+        self.assertEqual(self.test_dict.property_int_value("rocksdb.num-snapshots"), 0)
+
+    def test_iter_rejects_tailing(self):
+        assert self.test_dict is not None
+        opts = ReadOptions()
+        opts.set_tailing(True)
+        snapshot = self.test_dict.snapshot()
+        with self.assertRaises(ValueError):
+            snapshot.iter(opts)
+        with self.assertRaises(ValueError):
+            snapshot.keys(read_opt=opts)
+        del snapshot
+
+    @classmethod
+    def tearDownClass(cls):
+        assert cls.test_dict is not None
+        cls.test_dict.close()
+        collect()
+        Rdict.destroy(cls.path)
 
 
 if __name__ == "__main__":
