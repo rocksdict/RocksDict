@@ -1,6 +1,7 @@
 import gc
 import os
 import platform
+import subprocess
 import sys
 import unittest
 from json import dumps, loads
@@ -1204,6 +1205,39 @@ class TestColumnFamiliesCustomOptionsCreateReopenOverride(unittest.TestCase):
         di.close()
         db.close()
         self.test_dict.close()
+
+    @classmethod
+    def tearDownClass(cls):
+        gc.collect()
+        Rdict.destroy(cls.path)
+
+
+class TestIterKeepsColumnFamily(unittest.TestCase):
+    path = "./temp_iter_keeps_column_family"
+
+    def test_seek_after_drop(self):
+        # A child process runs the iterator, so that a crash fails this test
+        # instead of ending the test run.
+        script = (
+            "import gc\n"
+            "import sys\n"
+            "from rocksdict import Options, Rdict\n"
+            "db = Rdict(sys.argv[1])\n"
+            "cf = db.create_column_family('dropped', Options())\n"
+            "cf['k'] = 1\n"
+            "it = cf.iter()\n"
+            "it.seek_to_first()\n"
+            "db.drop_column_family('dropped')\n"
+            "del cf\n"
+            "gc.collect()\n"
+            "it.seek('k')\n"
+            "del it\n"
+            "db.close()\n"
+        )
+        child = subprocess.run(
+            [sys.executable, "-c", script, self.path], capture_output=True, text=True
+        )
+        self.assertEqual(child.returncode, 0, child.stderr)
 
     @classmethod
     def tearDownClass(cls):
