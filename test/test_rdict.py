@@ -14,6 +14,7 @@ from rocksdict import (
     Options,
     PlainTableFactoryOptions,
     Rdict,
+    ReadOptions,
     SliceTransform,
     WriteBatch,
 )
@@ -280,6 +281,34 @@ class TestIterInt(unittest.TestCase):
         cls.test_dict.close()
         gc.collect()
         Rdict.destroy(cls.path, Options())
+
+
+class TestIterateUpperBound(unittest.TestCase):
+    test_dict = None
+    path = "./temp_iterate_upper_bound"
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.test_dict = Rdict(cls.path)
+        for i in range(10):
+            cls.test_dict[f"k{i}"] = i
+
+    def test_upper_bound(self):
+        assert self.test_dict is not None
+        read_opt = ReadOptions()
+        read_opt.set_iterate_upper_bound("k5")
+        below = [f"k{i}" for i in range(5)]
+        self.assertEqual(list(self.test_dict.keys(read_opt=read_opt)), below)
+        self.assertEqual(
+            list(self.test_dict.keys(backwards=True, read_opt=read_opt)), below[::-1]
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        assert cls.test_dict is not None
+        cls.test_dict.close()
+        gc.collect()
+        Rdict.destroy(cls.path)
 
 
 class TestInt(unittest.TestCase):

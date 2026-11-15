@@ -192,7 +192,13 @@ pub(crate) struct ReadOptionsPy {
     async_io: bool,
 }
 
-pub(crate) struct ReadOpt(pub(crate) *mut librocksdb_sys::rocksdb_readoptions_t);
+/// RocksDB keeps pointers to the iterate bounds, not copies, so `ReadOpt`
+/// owns the encoded lower and upper bound.
+pub(crate) struct ReadOpt(
+    pub(crate) *mut librocksdb_sys::rocksdb_readoptions_t,
+    Option<Vec<u8>>,
+    Option<Vec<u8>>,
+);
 
 /// Defines the underlying memtable implementation.
 /// See official [wiki](https://github.com/facebook/rocksdb/wiki/MemTable) for more information.
@@ -2302,9 +2308,9 @@ impl ReadOptionsPy {
     }
 
     pub(crate) fn to_read_opt(&self, raw_mode: bool, py: Python) -> PyResult<ReadOpt> {
-        let opt = unsafe { ReadOpt(librocksdb_sys::rocksdb_readoptions_create()) };
+        let mut opt = unsafe { ReadOpt(librocksdb_sys::rocksdb_readoptions_create(), None, None) };
         if !self.iterate_lower_bound.is_none(py) {
-            let lower_bound = encode_key(self.iterate_lower_bound.bind(py), raw_mode)?;
+            let lower_bound = encode_key(self.iterate_lower_bound.bind(py), raw_mode)?.into_owned();
 
             unsafe {
                 librocksdb_sys::rocksdb_readoptions_set_iterate_lower_bound(
@@ -2313,9 +2319,10 @@ impl ReadOptionsPy {
                     lower_bound.len() as size_t,
                 );
             }
+            opt.1 = Some(lower_bound);
         }
         if !self.iterate_upper_bound.is_none(py) {
-            let upper_bound = encode_key(self.iterate_upper_bound.bind(py), raw_mode)?;
+            let upper_bound = encode_key(self.iterate_upper_bound.bind(py), raw_mode)?.into_owned();
 
             unsafe {
                 librocksdb_sys::rocksdb_readoptions_set_iterate_upper_bound(
@@ -2324,6 +2331,7 @@ impl ReadOptionsPy {
                     upper_bound.len() as size_t,
                 );
             }
+            opt.2 = Some(upper_bound);
         }
         unsafe {
             librocksdb_sys::rocksdb_readoptions_set_fill_cache(opt.0, self.fill_cache as c_uchar);
