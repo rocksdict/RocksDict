@@ -16,6 +16,10 @@ use std::sync::{Arc, Mutex};
 #[pyclass]
 #[allow(dead_code)]
 pub(crate) struct RdictIter {
+    /// The inner C iterator reads the column family handle, so the iterator keeps it alive.
+    /// Declared before `db`, so that the handle is destroyed while the DB is open.
+    pub(crate) column_family: Option<Arc<UnboundColumnFamily>>,
+
     /// iterator must keep a reference count of DB to keep DB alive.
     pub(crate) db: DbReferenceHolder,
 
@@ -88,6 +92,7 @@ impl RdictIter {
         };
 
         Ok(RdictIter {
+            column_family: cf.clone(),
             db: db.clone(),
             inner: Mutex::new(iter_inner),
             readopts,
