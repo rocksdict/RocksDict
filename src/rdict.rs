@@ -932,8 +932,12 @@ impl Rdict {
                 self.opt_py.raw_mode
             )));
         }
-        // write slice_transform info into config file, holding the lock so concurrent calls take turns
+        // Hold the lock while creating the column family and saving its slice_transform
+        // to the config file, so that concurrent calls cannot save a config that differs
+        // from the column family created. A failed creation saves nothing.
         let mut slice_transforms = self.slice_transforms.write().unwrap();
+        db.create_cf(name, &options.inner_opt)
+            .map_err(|e| PyException::new_err(e.to_string()))?;
         if let Some(slice_transform) = options.prefix_extractor {
             slice_transforms.insert(name.to_string(), slice_transform);
         }
@@ -943,8 +947,6 @@ impl Rdict {
         }
         .save_to_dir(&self.path()?)?;
         drop(slice_transforms);
-        db.create_cf(name, &options.inner_opt)
-            .map_err(|e| PyException::new_err(e.to_string()))?;
         self.get_column_family(name, py)
     }
 

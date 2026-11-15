@@ -122,6 +122,38 @@ class TestConcurrentRdict(unittest.TestCase):
             config = json.load(f)
         self.assertEqual(len(config["prefix_extractors"]), N_THREADS)
 
+    def read_prefix_extractors(self):
+        with open(os.path.join(self.path, "rocksdict-config.json")) as f:
+            return json.load(f)["prefix_extractors"]
+
+    def testFailedCreateColumnFamilyKeepsConfig(self):
+        options = Options()
+        options.set_prefix_extractor(SliceTransform.create_fixed_prefix(1))
+        self.db.create_column_family("cf", options).close()
+        options = Options()
+        options.set_prefix_extractor(SliceTransform.create_fixed_prefix(2))
+        with self.assertRaises(Exception):
+            self.db.create_column_family("cf", options)
+        self.assertEqual(self.read_prefix_extractors()["cf"], {"Fixed": 1})
+
+    def testCreateSameColumnFamilySavesWinner(self):
+        db = self.db
+        for r in range(20):
+            created = []
+
+            def work(i, name=f"cf{r}"):
+                options = Options()
+                options.set_prefix_extractor(SliceTransform.create_fixed_prefix(i + 1))
+                try:
+                    db.create_column_family(name, options).close()
+                except Exception:
+                    return
+                created.append(i + 1)
+
+            run_threads(work)
+            self.assertEqual(len(created), 1)
+            self.assertEqual(self.read_prefix_extractors()[f"cf{r}"], {"Fixed": created[0]})
+
 
 class TestSharedSstFileWriter(unittest.TestCase):
     # A race between two `open` calls has no hook to block in, so it is not tested here.
