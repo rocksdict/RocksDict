@@ -14,6 +14,7 @@ from rocksdict import (
     Options,
     PlainTableFactoryOptions,
     Rdict,
+    ReadOptions,
     SliceTransform,
     WriteBatch,
 )
@@ -217,6 +218,34 @@ class TestIterBytes(unittest.TestCase):
         cls.test_dict.close()
         gc.collect()
         Rdict.destroy(cls.path, Options())
+
+
+class TestIterateLowerBoundRaw(unittest.TestCase):
+    test_dict = None
+    opt = None
+    path = "./temp_iterate_lower_bound_raw"
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.opt = Options(raw_mode=True)
+        cls.test_dict = Rdict(cls.path, cls.opt)
+        for i in range(10):
+            cls.test_dict[b"k%d" % i] = b""
+
+    def test_lower_bound(self):
+        assert self.test_dict is not None
+        read_opt = ReadOptions()
+        read_opt.set_iterate_lower_bound(b"k8")
+        self.assertEqual(list(self.test_dict.keys(read_opt=read_opt)), [b"k8", b"k9"])
+        read_opt.set_iterate_upper_bound(b"k9")
+        self.assertEqual(list(self.test_dict.keys(read_opt=read_opt)), [b"k8"])
+
+    @classmethod
+    def tearDownClass(cls):
+        assert cls.test_dict is not None
+        cls.test_dict.close()
+        gc.collect()
+        Rdict.destroy(cls.path, cls.opt)
 
 
 class TestIterInt(unittest.TestCase):

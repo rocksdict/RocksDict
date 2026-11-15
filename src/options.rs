@@ -2183,7 +2183,7 @@ impl ReadOptionsPy {
 
     /// Sets the lower bound for an iterator.
     pub fn set_iterate_lower_bound(&mut self, key: Bound<PyAny>) -> PyResult<()> {
-        self.iterate_upper_bound = key.into_any().unbind();
+        self.iterate_lower_bound = key.into_any().unbind();
         Ok(())
     }
 
