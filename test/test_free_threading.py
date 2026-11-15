@@ -228,7 +228,8 @@ class TestConcurrentRdict(unittest.TestCase):
 
         def work(i):
             if i == 0:
-                started.wait()
+                if not started.wait(60):
+                    raise AssertionError("no worker started")
                 while True:
                     try:
                         db.close()
@@ -264,7 +265,8 @@ class TestConcurrentRdict(unittest.TestCase):
 
         def work(i):
             if i == 0:
-                started.wait()
+                if not started.wait(60):
+                    raise AssertionError("no worker started")
                 db.drop_column_family("cf")
                 return
             # a dropped column family stays readable through its open handle
