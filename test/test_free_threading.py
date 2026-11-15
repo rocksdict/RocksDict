@@ -141,7 +141,7 @@ class TestConcurrentRdict(unittest.TestCase):
         self.db.create_column_family("cf", options).close()
         options = Options()
         options.set_prefix_extractor(SliceTransform.create_fixed_prefix(2))
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, "already exists"):
             self.db.create_column_family("cf", options)
         self.assertEqual(self.read_prefix_extractors()["cf"], {"Fixed": 1})
 
@@ -150,7 +150,7 @@ class TestConcurrentRdict(unittest.TestCase):
         for r in range(20):
             created = []
 
-            def work(i, name=f"cf{r}"):
+            def work(i, name=f"cf{r}", created=created):
                 options = Options()
                 options.set_prefix_extractor(SliceTransform.create_fixed_prefix(i + 1))
                 try:
