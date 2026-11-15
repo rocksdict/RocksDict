@@ -187,7 +187,7 @@ pub(crate) struct ReadOptionsPy {
     background_purge_on_iterator_cleanup: bool,
     verify_checksums: bool,
     readahead_size: usize,
-    tailing: bool,
+    pub(crate) tailing: bool,
     pin_data: bool,
     async_io: bool,
 }

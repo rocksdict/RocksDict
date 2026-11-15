@@ -758,6 +758,7 @@ impl Rdict {
             read_opt.to_read_opt(self.opt_py.raw_mode, py)?,
             &self.loads,
             self.opt_py.raw_mode,
+            None,
         )
     }
 

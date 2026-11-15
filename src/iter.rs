@@ -1,6 +1,7 @@
 use crate::db_reference::DbReferenceHolder;
 use crate::encoder::{decode_value, encode_key};
 use crate::exceptions::DbClosedError;
+use crate::snapshot::Snapshot;
 use crate::util::error_message;
 use crate::ReadOpt;
 use core::slice;
@@ -25,6 +26,9 @@ pub(crate) struct RdictIter {
     /// inside `_readopts`. Storing this makes sure the upper bound is always alive when the
     /// iterator is being used.
     pub(crate) readopts: ReadOpt,
+
+    /// The snapshot that `readopts` points to, if any, kept alive as long as the iterator.
+    pub(crate) snapshot: Option<Py<Snapshot>>,
 
     /// use pickle loads to convert bytes to pyobjects
     pub(crate) loads: Py<PyAny>,
@@ -69,6 +73,7 @@ impl RdictIter {
         readopts: ReadOpt,
         pickle_loads: &Py<PyAny>,
         raw_mode: bool,
+        snapshot: Option<Py<Snapshot>>,
     ) -> PyResult<Self> {
         let db_inner = db
             .get()
@@ -88,6 +93,7 @@ impl RdictIter {
             db: db.clone(),
             inner: Mutex::new(iter_inner),
             readopts,
+            snapshot,
             loads: pickle_loads.clone(),
             raw_mode,
         })

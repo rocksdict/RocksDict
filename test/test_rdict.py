@@ -14,6 +14,7 @@ from rocksdict import (
     Options,
     PlainTableFactoryOptions,
     Rdict,
+    ReadOptions,
     SliceTransform,
     WriteBatch,
 )
@@ -1430,6 +1431,26 @@ class TestSnapshot(unittest.TestCase):
         del it, snapshot
 
         self.assertEqual(list(self.test_dict.items()), [(i, -i) for i in range(5, 10)])
+
+    def test_iter_keeps_snapshot(self):
+        assert self.test_dict is not None
+        it = self.test_dict.snapshot().iter()
+        gc.collect()
+        self.assertEqual(self.test_dict.property_int_value("rocksdb.num-snapshots"), 1)
+        del it
+        gc.collect()
+        self.assertEqual(self.test_dict.property_int_value("rocksdb.num-snapshots"), 0)
+
+    def test_iter_rejects_tailing(self):
+        assert self.test_dict is not None
+        opts = ReadOptions()
+        opts.set_tailing(True)
+        snapshot = self.test_dict.snapshot()
+        with self.assertRaises(ValueError):
+            snapshot.iter(opts)
+        with self.assertRaises(ValueError):
+            snapshot.keys(read_opt=opts)
+        del snapshot
 
     @classmethod
     def tearDownClass(cls):
