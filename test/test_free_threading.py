@@ -5,12 +5,21 @@ import sys
 import sysconfig
 import tempfile
 import threading
+import time
 import unittest
 
-from rocksdict import Options, Rdict, SliceTransform, SstFileWriter, WriteBatch
+from rocksdict import (
+    DbClosedError,
+    Options,
+    Rdict,
+    SliceTransform,
+    SstFileWriter,
+    WriteBatch,
+)
 
 N_THREADS = 8
 N_OPS = 2000
+FREE_THREADED = bool(sysconfig.get_config_var("Py_GIL_DISABLED"))
 
 
 def run_threads(target, n=N_THREADS):
@@ -154,37 +163,160 @@ class TestConcurrentRdict(unittest.TestCase):
             self.assertEqual(len(created), 1)
             self.assertEqual(self.read_prefix_extractors()[f"cf{r}"], {"Fixed": created[0]})
 
+    def testSharedIterator(self):
+        db = self.db
+        for j in range(N_OPS):
+            db[j] = j
+        it = db.items()
+        seen = [[] for _ in range(N_THREADS)]
+
+        def work(i):
+            while True:
+                try:
+                    key, value = next(it)
+                except StopIteration:
+                    return
+                except RuntimeError:  # another thread holds the iterator
+                    continue
+                self.assertEqual(key, value)
+                seen[i].append(key)
+
+        run_threads(work)
+        keys = [key for s in seen for key in s]
+        self.assertEqual(sorted(keys), list(range(N_OPS)))
+
+    def testSharedWriteBatch(self):
+        wb = WriteBatch()
+
+        def work(i):
+            for j in range(200):
+                while True:
+                    try:
+                        wb[f"wb-{i}-{j}"] = j
+                        break
+                    except RuntimeError:  # another thread holds the batch
+                        pass
+
+        run_threads(work)
+        self.db.write(wb)
+        for i in range(N_THREADS):
+            for j in range(200):
+                self.assertEqual(self.db[f"wb-{i}-{j}"], j)
+
+    def testSharedSnapshot(self):
+        db = self.db
+        for j in range(500):
+            db[j] = j
+        snapshot = db.snapshot()
+
+        def work(i):
+            for j in range(500):
+                if i == 0:
+                    db[j] = -j
+                else:
+                    self.assertEqual(snapshot[j], j)
+
+        run_threads(work)
+        self.assertEqual(db[499], -499)
+
+    def testCloseWhileInUse(self):
+        path = os.path.join(self.tmp.name, "closed")
+        db = Rdict(path, Options())
+        for j in range(100):
+            db[j] = j
+        started = threading.Event()
+
+        def work(i):
+            if i == 0:
+                started.wait()
+                while True:
+                    try:
+                        db.close()
+                        return
+                    except RuntimeError:  # another thread is using the Rdict
+                        pass
+            for j in range(N_OPS):
+                try:
+                    db[j % 100] = j
+                    db.get(j % 100)
+                    for _ in zip(range(5), db.keys()):
+                        pass
+                except (DbClosedError, RuntimeError):
+                    return
+                except Exception as e:
+                    if "closed" not in str(e):
+                        raise
+                    return
+                started.set()
+
+        run_threads(work)
+        with self.assertRaises(DbClosedError):
+            db[0] = 0
+        gc.collect()
+        Rdict.destroy(path, Options())
+
+    def testDropColumnFamilyWhileReading(self):
+        db = self.db
+        cf = db.create_column_family("cf", Options())
+        for j in range(100):
+            cf[j] = j
+        started = threading.Event()
+
+        def work(i):
+            if i == 0:
+                started.wait()
+                db.drop_column_family("cf")
+                return
+            # a dropped column family stays readable through its open handle
+            for _ in range(50):
+                self.assertEqual(cf[i], i)
+                self.assertEqual(len(list(cf.keys())), 100)
+                started.set()
+
+        run_threads(work)
+
 
 class TestSharedSstFileWriter(unittest.TestCase):
-    # A race between two `open` calls has no hook to block in, so it is not tested here.
+    # open() on a FIFO blocks, holding the writer, until the FIFO has a reader.
+    # Under the GIL that thread would keep the GIL too, so the test needs a free-threaded build.
+    @unittest.skipUnless(FREE_THREADED and hasattr(os, "mkfifo"), "needs free threading and mkfifo")
     def testConcurrentUseRaisesNotCrashes(self):
         with tempfile.TemporaryDirectory() as tmp:
+            fifo = os.path.join(tmp, "fifo.sst")
+            os.mkfifo(fifo)
             writer = SstFileWriter()
-            writer.open(os.path.join(tmp, "a.sst"))
-            entered = threading.Event()
-            release = threading.Event()
 
-            def blocking_dumps(value):
-                entered.set()
-                release.wait()
-                return b"value"
+            def open_fifo():
+                while True:
+                    try:
+                        writer.open(fifo)
+                        return
+                    except RuntimeError:  # the main thread is in file_size()
+                        pass
+                    except Exception:
+                        return
 
-            # the setter thread holds the writer while blocked in dumps
-            writer.set_dumps(blocking_dumps)
-            setter = threading.Thread(
-                target=writer.__setitem__, args=("key", ["value"])
-            )
-            setter.start()
-            entered.wait()
+            # a stop-the-world collection would wait for the thread blocked in open()
+            gc.disable()
+            opener = threading.Thread(target=open_fifo)
+            opener.start()
             try:
+                deadline = time.monotonic() + 10
+                while time.monotonic() < deadline:
+                    try:
+                        writer.file_size()
+                    except RuntimeError:
+                        break
+                else:
+                    self.fail("file_size() never raised while open() was blocked")
                 with self.assertRaises(RuntimeError):
                     writer.open(os.path.join(tmp, "b.sst"))
-                with self.assertRaises(RuntimeError):
-                    writer.file_size()
             finally:
-                release.set()
-                setter.join()
-            writer.finish()
+                # the reader stays open until open() has returned
+                reader = os.open(fifo, os.O_RDONLY | os.O_NONBLOCK)
+                opener.join()
+                os.close(reader)
+                gc.enable()
 
 
 if __name__ == "__main__":
